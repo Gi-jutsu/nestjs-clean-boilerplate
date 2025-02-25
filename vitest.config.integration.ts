@@ -12,7 +12,7 @@ export default defineConfig({
     },
     exclude: ["build", "node_modules"],
     fileParallelism: false,
-    globalSetup: "specs/e2e.setup.ts",
-    include: ["src/**/*.e2e.spec.ts"],
+    globalSetup: "specs/integration.setup.ts",
+    include: ["src/**/*.integration.spec.ts"],
   },
 });

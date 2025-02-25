@@ -39,7 +39,7 @@ jobs:
       - name: Run unitary tests
         run: pnpm test
 
-      - name: Set environment variables for E2E tests
+      - name: Set environment variables for integration tests
         run: |
           echo "API_HTTP_HOST=127.0.0.1" >> $GITHUB_ENV
           echo "API_HTTP_PORT=8080" >> $GITHUB_ENV
@@ -47,5 +47,5 @@ jobs:
           echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres" >> $GITHUB_ENV
           echo "JWT_SECRET=secret" >> $GITHUB_ENV
 
-      - name: Run E2E tests
-        run: pnpm test:e2e
+      - name: Run integration tests
+        run: pnpm test:integration

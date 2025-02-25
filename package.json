@@ -7,7 +7,7 @@
     "start": "node ./build/main.js",
     "start:watch": "chokidar --silent './build/**/*.js' '.env' -c 'kill-port 8080 && pnpm start'",
     "test": "vitest",
-    "test:e2e": "vitest run -c vitest.config.e2e.ts"
+    "test:integration": "vitest run -c vitest.config.integration.ts"
   },
   "devDependencies": {
     "@swc/cli": "^0.5.2",
