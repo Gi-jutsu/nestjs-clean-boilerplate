@@ -1,4 +1,4 @@
-FROM node:22-alpine as base
+FROM node:lts-alpine as base
 
 RUN addgroup -S app_group && adduser -S app_user -G app_group
 
