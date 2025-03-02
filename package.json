@@ -6,7 +6,8 @@
     "dev": "concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch\" \"tsc --noEmit --watch\"",
     "start": "node ./build/main.js",
     "start:watch": "chokidar --silent './build/**/*.js' '.env' -c 'kill-port 8080 && pnpm start'",
-    "test": "vitest",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "vitest",
     "test:integration": "vitest run -c vitest.config.integration.ts"
   },
   "devDependencies": {
