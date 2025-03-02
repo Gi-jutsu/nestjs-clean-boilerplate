@@ -1,9 +1,6 @@
 version: "3"
 services:
   api:
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile
     image: backend
     environment:
       API_HTTP_HOST: "0.0.0.0"
