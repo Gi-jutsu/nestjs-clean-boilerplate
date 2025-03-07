@@ -38,14 +38,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Set environment variables
-        if: matrix.test-type == 'integration'
+      - name: Load environment variables from .env.docker
+        shell: bash
+        # strip comments: grep -v '^\s*#'
+        # strip empty lines: grep -v '^\s*$'
         run: |
-          echo "API_HTTP_HOST=127.0.0.1" >> $GITHUB_ENV
-          echo "API_HTTP_PORT=8080" >> $GITHUB_ENV
-          echo "API_HTTP_SCHEME=http" >> $GITHUB_ENV
-          echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres" >> $GITHUB_ENV
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+          cat .env.docker | grep -v '^\s*#' | grep -v '^\s*$' >> $GITHUB_ENV
 
       - name: Run ${{ matrix.test-type }} tests
         run: pnpm test:${{ matrix.test-type }}
