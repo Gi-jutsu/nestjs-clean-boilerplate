@@ -2,11 +2,8 @@ version: "3"
 services:
   api:
     image: backend
-    environment:
-      API_HTTP_HOST: "0.0.0.0"
-      API_HTTP_PORT: "8080"
-      API_HTTP_SCHEME: "http"
-      DATABASE_URL: "postgres://admin:password@database:5432/database"
+    env_file:
+      - .env.docker
     ports:
       - "8080:8080"
 
