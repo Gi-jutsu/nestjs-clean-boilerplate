@@ -27,6 +27,7 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
     API_HTTP_SCHEME: z.enum(["http", "https"]),
     DATABASE_URL: z.string(),
     JWT_SECRET: z.string(),
+    OUTBOX_PROCESSING_INTERVAL: z.string().transform(Number),
   })
   .transform((data) => ({
     ...data,
@@ -83,7 +84,7 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
     {
       provide: ProcessOutboxMessagesScheduler,
       useFactory: createFactoryFromConstructor(ProcessOutboxMessagesScheduler),
-      inject: [ProcessOutboxMessagesUseCase],
+      inject: [ConfigService, ProcessOutboxMessagesUseCase],
     },
     {
       provide: ProcessOutboxMessagesUseCase,

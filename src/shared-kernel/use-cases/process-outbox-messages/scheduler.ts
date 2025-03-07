@@ -1,3 +1,4 @@
+import { ConfigService } from "@nestjs/config";
 import { OnApplicationBootstrap, OnApplicationShutdown } from "@nestjs/common";
 import { ProcessOutboxMessagesUseCase } from "./use-case.js";
 
@@ -5,15 +6,21 @@ export class ProcessOutboxMessagesScheduler
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
   private _intervalId: NodeJS.Timeout;
+  private readonly _interval: number;
 
-  constructor(private readonly useCase: ProcessOutboxMessagesUseCase) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly useCase: ProcessOutboxMessagesUseCase
+  ) {
+    this._interval = this.config.getOrThrow("OUTBOX_PROCESSING_INTERVAL");
+  }
 
   async handle() {
     await this.useCase.execute();
   }
 
   onApplicationBootstrap() {
-    this._intervalId = setInterval(() => this.handle(), 1);
+    this._intervalId = setInterval(() => this.handle(), this._interval);
   }
 
   onApplicationShutdown() {
