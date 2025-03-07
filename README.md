@@ -69,11 +69,6 @@ pnpm dev
 
 ```bash
 📁 src/
-├── 📁 core/
-│ ├── 📁 errors/ # Base error classes such as ResourceNotFound, etc.
-│ ├── 📁 primitives/ # Building blocks like Entity, etc.
-│ └── 📁 utils/ # Utility functions
-│
 ├── 📁 identity-and-access/
 │ ├── 📁 domain/ # Business logic (e.g. Account, ForgotPasswordRequest ...)
 │ ├── 📁 infrastructure/ # Driver adapters (e.g., Jwt, Mailer, etc.)
@@ -81,9 +76,10 @@ pnpm dev
 │ └── 📄 identity-and-access.module.ts
 │
 ├── 📁 shared-kernel/
-│ ├── 📁 domain/
+│ ├── 📁 domain/ # Shared logic and core domain concepts (e.g., AggregateRoot, DomainEvent, Outbox Message, Shared Errors)
 │ ├── 📁 infrastructure/ # Driver adapters used across multiple bounded-contexts (e.g. GoogleCloudTasks, ...)
 │ ├── 📁 use-cases/
+│ ├── 📁 utils/
 │ └── 📄 shared-kernel.module.ts
 │
 ├── 📄 application.module.ts
