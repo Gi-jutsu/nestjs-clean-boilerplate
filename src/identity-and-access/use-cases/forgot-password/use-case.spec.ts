@@ -6,6 +6,7 @@ import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/r
 import { DateTime, Settings } from "luxon";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ForgotPasswordUseCase } from "./use-case.js";
+import { OutboxDomainEventPublisher } from "@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js";
 
 describe("ForgotPasswordUseCase", () => {
   beforeAll(() => {
@@ -198,15 +199,16 @@ describe("ForgotPasswordUseCase", () => {
 });
 
 function createSystemUnderTest() {
-  const allAccounts = new InMemoryAccountRepository();
-  const allForgotPasswordRequests =
-    new InMemoryForgotPasswordRequestRepository();
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(allOutboxMessages);
+
+  const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
+  const allForgotPasswordRequests =
+    new InMemoryForgotPasswordRequestRepository(outboxDomainEventPublisher);
 
   const useCase = new ForgotPasswordUseCase(
     allAccounts,
     allForgotPasswordRequests,
-    allOutboxMessages
   );
 
   return { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase };

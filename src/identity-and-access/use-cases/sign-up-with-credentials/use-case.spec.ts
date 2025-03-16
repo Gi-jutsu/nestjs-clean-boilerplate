@@ -4,6 +4,8 @@ import { InMemoryAccountRepository } from "@identity-and-access/infrastructure/r
 import { DateTime, Settings } from "luxon";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SignUpWithCredentialsUseCase } from "./use-case.js";
+import { OutboxDomainEventPublisher } from "@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js";
+import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
 
 describe("SignUpWithCredentialsUseCase", () => {
   beforeAll(() => {
@@ -76,7 +78,12 @@ describe("SignUpWithCredentialsUseCase", () => {
 });
 
 function createSystemUnderTest() {
-  const allAccounts = new InMemoryAccountRepository();
+  const allOutboxMessages = new InMemoryOutboxMessageRepository();
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
+    allOutboxMessages
+  );
+
+  const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
   const fakePasswordHasher = new FakePasswordHasher();
 
   const useCase = new SignUpWithCredentialsUseCase(

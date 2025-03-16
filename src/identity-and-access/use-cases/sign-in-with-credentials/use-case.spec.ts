@@ -4,6 +4,8 @@ import { DateTime, Settings } from "luxon";
 import { afterAll, beforeAll, describe, expect, it, vi, vitest } from "vitest";
 import { SignInWithCredentialsUseCase } from "./use-case.js";
 import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
+import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
+import { OutboxDomainEventPublisher } from "@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js";
 
 describe("SignInWithCredentialsUseCase", () => {
   beforeAll(() => {
@@ -91,7 +93,12 @@ describe("SignInWithCredentialsUseCase", () => {
 });
 
 function createSystemUnderTest() {
-  const allAccounts = new InMemoryAccountRepository();
+  const allOutboxMessages = new InMemoryOutboxMessageRepository();
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
+    allOutboxMessages
+  );
+
+  const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
   const jwt = {
     sign: vi.fn(),
     verify: vi.fn(),

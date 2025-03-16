@@ -5,6 +5,7 @@ import {
   type IdentityAndAccessDatabase,
 } from "@identity-and-access/infrastructure/database/drizzle.schema.js";
 import { Inject, Injectable } from "@nestjs/common";
+import { DomainEventPublisherToken, type DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
 import { DrizzlePostgresPoolToken } from "@shared-kernel/infrastructure/drizzle/constants.js";
 import { eq } from "drizzle-orm";
 import { DateTime } from "luxon";
@@ -15,7 +16,9 @@ export class DrizzleForgotPasswordRequestRepository
 {
   constructor(
     @Inject(DrizzlePostgresPoolToken)
-    private readonly database: IdentityAndAccessDatabase
+    private readonly database: IdentityAndAccessDatabase,
+    @Inject(DomainEventPublisherToken)
+    private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
   async findByAccountId(accountId: string) {
@@ -52,5 +55,7 @@ export class DrizzleForgotPasswordRequestRepository
         target: [ForgotPasswordRequestSchema.id],
         set: snapshotWithJsDate,
       });
+    
+    await this.domainEventPublisher.publish(request);
   }
 }

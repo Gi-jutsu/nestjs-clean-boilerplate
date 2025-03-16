@@ -1,8 +1,11 @@
 import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
 import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
+import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
 
 export class InMemoryAccountRepository implements AccountRepository {
   snapshots = new Map();
+
+  constructor(private readonly domainEventPublisher: DomainEventPublisher) {}
 
   async findByEmail(email: string) {
     for (const [id, properties] of this.snapshots.entries()) {
@@ -25,5 +28,6 @@ export class InMemoryAccountRepository implements AccountRepository {
 
   async save(account: Account) {
     this.snapshots.set(account.id, account.properties);
+    await this.domainEventPublisher.publish(account);
   }
 }

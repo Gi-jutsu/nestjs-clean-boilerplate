@@ -16,6 +16,8 @@ import { DrizzleOutboxMessageRepository } from "./infrastructure/repositories/dr
 import { HealthCheckHttpController } from "./use-cases/health-check/http.controller.js";
 import { ProcessOutboxMessagesScheduler } from "./use-cases/process-outbox-messages/scheduler.js";
 import { ProcessOutboxMessagesUseCase } from "./use-cases/process-outbox-messages/use-case.js";
+import { DomainEventPublisherToken } from "./domain/ports/domain-event-publisher.port.js";
+import { OutboxDomainEventPublisher } from "./infrastructure/outbox-domain-event-publisher.adapter.js";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -70,6 +72,11 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
       useClass: MapErrorToRfc9457HttpException,
     },
     {
+      provide: DomainEventPublisherToken,
+      useFactory: createFactoryFromConstructor(OutboxDomainEventPublisher),
+      inject: [OutboxMessageRepositoryToken],
+    },
+    {
       provide: OutboxMessageRepositoryToken,
       useClass: DrizzleOutboxMessageRepository,
     },
@@ -92,6 +99,6 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
       inject: [OutboxMessageRepositoryToken, EventEmitter2],
     },
   ],
-  exports: [DrizzleModule, MailerToken, OutboxMessageRepositoryToken],
+  exports: [DomainEventPublisherToken, DrizzleModule, MailerToken, OutboxMessageRepositoryToken],
 })
 export class SharedKernelModule {}

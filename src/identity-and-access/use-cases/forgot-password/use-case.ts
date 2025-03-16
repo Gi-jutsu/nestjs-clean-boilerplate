@@ -3,14 +3,11 @@ import type { Account } from "@identity-and-access/domain/account/aggregate-root
 import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
 import { ForgotPasswordRequest } from "@identity-and-access/domain/forgot-password-request/aggregate-root.js";
 import type { ForgotPasswordRequestRepository } from "@identity-and-access/domain/forgot-password-request/repository.js";
-import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
-import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
 
 export class ForgotPasswordUseCase {
   constructor(
     private readonly allAccounts: AccountRepository,
     private readonly allForgotPasswordRequests: ForgotPasswordRequestRepository,
-    private readonly allOutboxMessages: OutboxMessageRepository
   ) {}
 
   async execute(command: ForgotPasswordCommand) {
@@ -24,7 +21,6 @@ export class ForgotPasswordUseCase {
 
     // @TODO: Must be done in a SQL Transaction
     await this.allForgotPasswordRequests.save(request);
-    await this.saveDomainEventsAsOutboxMessages(request);
   }
 
   private async findAccountByEmailOrThrow(email: string) {
@@ -36,6 +32,7 @@ export class ForgotPasswordUseCase {
         searchedByValue: email,
       });
     }
+
     return account;
   }
 
@@ -52,15 +49,6 @@ export class ForgotPasswordUseCase {
     });
 
     return { hasBeenCreated: true, request: newRequest };
-  }
-
-  private async saveDomainEventsAsOutboxMessages(
-    request: ForgotPasswordRequest
-  ) {
-    const events = request.pullDomainEvents();
-    const messages = events.map(OutboxMessage.fromDomainEvent);
-
-    await this.allOutboxMessages.save(messages);
   }
 }
 
