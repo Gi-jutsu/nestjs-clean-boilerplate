@@ -1,6 +1,6 @@
-import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
-import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
-import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
+import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
+import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
+import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
 
 export class InMemoryAccountRepository implements AccountRepository {
   snapshots = new Map();
@@ -21,9 +21,7 @@ export class InMemoryAccountRepository implements AccountRepository {
   }
 
   async isEmailTaken(email: string) {
-    return Array.from(this.snapshots.values()).some(
-      (properties) => properties.email === email
-    );
+    return Array.from(this.snapshots.values()).some((properties) => properties.email === email);
   }
 
   async save(account: Account) {

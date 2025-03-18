@@ -1,4 +1,4 @@
-import { ConfigurableModuleBuilder } from "@nestjs/common";
+import { ConfigurableModuleBuilder } from '@nestjs/common';
 
 export interface DrizzleModuleOptions {
   connectionString: string;

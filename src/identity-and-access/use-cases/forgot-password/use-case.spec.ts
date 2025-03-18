@@ -1,14 +1,14 @@
-import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
-import { ForgotPasswordRequest } from "@identity-and-access/domain/forgot-password-request/aggregate-root.js";
-import { InMemoryAccountRepository } from "@identity-and-access/infrastructure/repositories/in-memory-account.repository.js";
-import { InMemoryForgotPasswordRequestRepository } from "@identity-and-access/infrastructure/repositories/in-memory-forgot-password-request.repository.js";
-import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
-import { DateTime, Settings } from "luxon";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ForgotPasswordUseCase } from "./use-case.js";
-import { OutboxDomainEventPublisher } from "@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js";
+import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
+import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-password-request/aggregate-root.js';
+import { InMemoryAccountRepository } from '@identity-and-access/infrastructure/repositories/in-memory-account.repository.js';
+import { InMemoryForgotPasswordRequestRepository } from '@identity-and-access/infrastructure/repositories/in-memory-forgot-password-request.repository.js';
+import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
+import { DateTime, Settings } from 'luxon';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ForgotPasswordUseCase } from './use-case.js';
+import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
 
-describe("ForgotPasswordUseCase", () => {
+describe('ForgotPasswordUseCase', () => {
   beforeAll(() => {
     Settings.now = () => new Date(0).getMilliseconds();
   });
@@ -17,11 +17,11 @@ describe("ForgotPasswordUseCase", () => {
     Settings.now = () => Date.now();
   });
 
-  it("should throw an error when attempting to reset password for an unregistered email address", async () => {
+  it('should throw an error when attempting to reset password for an unregistered email address', async () => {
     // Given
     const { useCase } = createSystemUnderTest();
 
-    const email = "non-registered@call-me-dev.com";
+    const email = 'non-registered@call-me-dev.com';
 
     // When
     const promise = useCase.execute({
@@ -31,26 +31,25 @@ describe("ForgotPasswordUseCase", () => {
     // Then
     await expect(promise).rejects.toMatchObject({
       status: 404,
-      code: "resource-not-found",
-      title: "Resource Not Found",
-      detail: "The Account you are trying to access does not exist.",
+      code: 'resource-not-found',
+      title: 'Resource Not Found',
+      detail: 'The Account you are trying to access does not exist.',
       timestamp: DateTime.now(),
-      pointer: "/data/attributes/email",
-      resource: "Account",
-      searchedByFieldName: "email",
+      pointer: '/data/attributes/email',
+      resource: 'Account',
+      searchedByFieldName: 'email',
       searchedByValue: email,
     });
   });
 
-  it("should initiate the password reset process for an existing account", async () => {
+  it('should initiate the password reset process for an existing account', async () => {
     // Given
-    const { allAccounts, allForgotPasswordRequests, useCase } =
-      createSystemUnderTest();
+    const { allAccounts, allForgotPasswordRequests, useCase } = createSystemUnderTest();
 
     const account = {
-      email: "registered@call-me-dev.com",
-      id: "1",
-      password: "password",
+      email: 'registered@call-me-dev.com',
+      id: '1',
+      password: 'password',
     };
 
     allAccounts.snapshots.set(account.id, account);
@@ -71,25 +70,24 @@ describe("ForgotPasswordUseCase", () => {
     ]);
   });
 
-  it("should refresh the token and expiration date when the password reset process has already been initiated", async () => {
+  it('should refresh the token and expiration date when the password reset process has already been initiated', async () => {
     // Given
-    const { allAccounts, allForgotPasswordRequests, useCase } =
-      createSystemUnderTest();
+    const { allAccounts, allForgotPasswordRequests, useCase } = createSystemUnderTest();
 
     // @todo(dev-ux): impl Object Mother
     // @see https://martinfowler.com/bliki/ObjectMother.html
     const account = Account.fromSnapshot({
-      email: "user@example.com",
+      email: 'user@example.com',
       isEmailVerified: true,
-      password: "hashed-password",
-      id: "account-1",
+      password: 'hashed-password',
+      id: 'account-1',
     });
 
     const request = ForgotPasswordRequest.fromSnapshot({
       accountId: account.id,
       expiresAt: DateTime.now().plus({ days: 1 }),
-      id: "request-1",
-      token: "token",
+      id: 'request-1',
+      token: 'token',
     });
 
     allAccounts.snapshots.set(account.id, account.properties);
@@ -116,14 +114,14 @@ describe("ForgotPasswordUseCase", () => {
     ]);
   });
 
-  it("should save a ForgotPasswordRequestCreatedDomainEvent to the outbox upon successfully requesting a password reset", async () => {
+  it('should save a ForgotPasswordRequestCreatedDomainEvent to the outbox upon successfully requesting a password reset', async () => {
     // Given
     const { allAccounts, allOutboxMessages, useCase } = createSystemUnderTest();
 
     const account = {
-      email: "registered@call-me-dev.com",
-      id: "1",
-      password: "password",
+      email: 'registered@call-me-dev.com',
+      id: '1',
+      password: 'password',
     };
 
     allAccounts.snapshots.set(account.id, account);
@@ -137,10 +135,10 @@ describe("ForgotPasswordUseCase", () => {
     expect([...allOutboxMessages.snapshots.values()]).toEqual([
       {
         errorMessage: null,
-        eventType: "ForgotPasswordRequestCreatedDomainEvent",
+        eventType: 'ForgotPasswordRequestCreatedDomainEvent',
         id: expect.any(String),
         payload: {
-          accountId: "1",
+          accountId: '1',
           expiresAt: DateTime.now().plus({ days: 1 }),
           id: expect.any(String),
           token: expect.any(String),
@@ -150,25 +148,21 @@ describe("ForgotPasswordUseCase", () => {
     ]);
   });
 
-  it("should save a ForgotPasswordRequestRefreshedDomainEvent to the outbox upon refreshing a password reset request", async () => {
+  it('should save a ForgotPasswordRequestRefreshedDomainEvent to the outbox upon refreshing a password reset request', async () => {
     // Given
-    const {
-      allAccounts,
-      allForgotPasswordRequests,
-      allOutboxMessages,
-      useCase,
-    } = createSystemUnderTest();
+    const { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase } =
+      createSystemUnderTest();
 
     const account = {
-      email: "dylan@call-me-dev.com",
-      password: "password",
+      email: 'dylan@call-me-dev.com',
+      password: 'password',
     };
 
     const request = {
-      accountId: "1",
+      accountId: '1',
       expiresAt: DateTime.now().plus({ days: 1 }),
-      id: "1",
-      token: "token",
+      id: '1',
+      token: 'token',
     };
 
     allAccounts.snapshots.set(request.accountId, account);
@@ -184,12 +178,12 @@ describe("ForgotPasswordUseCase", () => {
     expect(snapshots).toEqual([
       {
         errorMessage: null,
-        eventType: "ForgotPasswordRequestRefreshedDomainEvent",
+        eventType: 'ForgotPasswordRequestRefreshedDomainEvent',
         id: expect.any(String),
         payload: {
-          accountId: "1",
+          accountId: '1',
           expiresAt: DateTime.now().plus({ days: 1 }),
-          id: "1",
+          id: '1',
           token: expect.any(String),
         },
         processedAt: null,
@@ -203,13 +197,11 @@ function createSystemUnderTest() {
   const outboxDomainEventPublisher = new OutboxDomainEventPublisher(allOutboxMessages);
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
-  const allForgotPasswordRequests =
-    new InMemoryForgotPasswordRequestRepository(outboxDomainEventPublisher);
-
-  const useCase = new ForgotPasswordUseCase(
-    allAccounts,
-    allForgotPasswordRequests,
+  const allForgotPasswordRequests = new InMemoryForgotPasswordRequestRepository(
+    outboxDomainEventPublisher,
   );
+
+  const useCase = new ForgotPasswordUseCase(allAccounts, allForgotPasswordRequests);
 
   return { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase };
 }

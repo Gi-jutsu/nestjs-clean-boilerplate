@@ -3,4 +3,4 @@ export interface PasswordHasher {
   hash(password: string, saltOrRounds: string | number): Promise<string>;
 }
 
-export const PasswordHasherToken = Symbol("PasswordHasher");
+export const PasswordHasherToken = Symbol('PasswordHasher');

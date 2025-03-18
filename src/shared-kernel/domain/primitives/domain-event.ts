@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 
 interface CreateDomainEventProps<Payload = Record<string, unknown>> {
   payload: Payload;

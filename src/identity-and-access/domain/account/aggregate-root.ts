@@ -1,5 +1,5 @@
-import { AggregateRoot } from "@shared-kernel/domain/primitives/aggregate-root.js";
-import { NewAccountRegisteredDomainEvent } from "./events/new-account-registered.js";
+import { AggregateRoot } from '@shared-kernel/domain/primitives/aggregate-root.js';
+import { NewAccountRegisteredDomainEvent } from './events/new-account-registered.js';
 
 interface Properties {
   email: string;
@@ -26,7 +26,7 @@ export class Account extends AggregateRoot<Properties> {
         payload: {
           email: account.properties.email,
         },
-      })
+      }),
     );
 
     return account;

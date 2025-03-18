@@ -27,6 +27,7 @@
     "concurrently": "^9.1.0",
     "drizzle-kit": "^0.30.1",
     "kill-port": "^2.0.1",
+    "prettier": "3.5.3",
     "supertest": "^7.0.0",
     "testcontainers": "^10.16.0",
     "typescript": "^5.7.2",

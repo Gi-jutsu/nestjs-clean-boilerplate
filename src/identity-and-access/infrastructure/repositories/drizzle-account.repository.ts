@@ -1,16 +1,16 @@
-import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
-import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
+import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
+import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
 import {
   accountSchema,
   type IdentityAndAccessDatabase,
-} from "@identity-and-access/infrastructure/database/drizzle.schema.js";
-import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
-import { count, eq } from "drizzle-orm";
+} from '@identity-and-access/infrastructure/database/drizzle.schema.js';
+import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
+import { count, eq } from 'drizzle-orm';
 
 export class DrizzleAccountRepository implements AccountRepository {
   constructor(
     private readonly database: IdentityAndAccessDatabase,
-    private readonly domainEventPublisher: DomainEventPublisher
+    private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
   async findByEmail(email: string) {

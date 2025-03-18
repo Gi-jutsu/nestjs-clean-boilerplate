@@ -1,16 +1,14 @@
-import { ForgotPasswordRequest } from "@identity-and-access/domain/forgot-password-request/aggregate-root.js";
-import type { ForgotPasswordRequestRepository } from "@identity-and-access/domain/forgot-password-request/repository.js";
+import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-password-request/aggregate-root.js';
+import type { ForgotPasswordRequestRepository } from '@identity-and-access/domain/forgot-password-request/repository.js';
 import {
   ForgotPasswordRequestSchema,
   type IdentityAndAccessDatabase,
-} from "@identity-and-access/infrastructure/database/drizzle.schema.js";
-import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
-import { eq } from "drizzle-orm";
-import { DateTime } from "luxon";
+} from '@identity-and-access/infrastructure/database/drizzle.schema.js';
+import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
+import { eq } from 'drizzle-orm';
+import { DateTime } from 'luxon';
 
-export class DrizzleForgotPasswordRequestRepository
-  implements ForgotPasswordRequestRepository
-{
+export class DrizzleForgotPasswordRequestRepository implements ForgotPasswordRequestRepository {
   constructor(
     private readonly database: IdentityAndAccessDatabase,
     private readonly domainEventPublisher: DomainEventPublisher,
@@ -50,7 +48,7 @@ export class DrizzleForgotPasswordRequestRepository
         target: [ForgotPasswordRequestSchema.id],
         set: snapshotWithJsDate,
       });
-    
+
     await this.domainEventPublisher.publish(request);
   }
 }

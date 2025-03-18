@@ -1,11 +1,5 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  Logger,
-  NestInterceptor,
-} from "@nestjs/common";
-import { tap } from "rxjs/operators";
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class HttpLoggerInterceptor implements NestInterceptor {
@@ -23,9 +17,9 @@ export class HttpLoggerInterceptor implements NestInterceptor {
         const executionTime = Date.now() - start;
 
         this.logger.debug(
-          `[Res] ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`
+          `[Res] ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`,
         );
-      })
+      }),
     );
   }
 }

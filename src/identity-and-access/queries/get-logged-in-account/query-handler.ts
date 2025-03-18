@@ -1,10 +1,10 @@
-import type { Account } from "@identity-and-access/domain/account/aggregate-root.js";
+import type { Account } from '@identity-and-access/domain/account/aggregate-root.js';
 import {
   accountSchema,
   type IdentityAndAccessDatabase,
-} from "@identity-and-access/infrastructure/database/drizzle.schema.js";
-import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not-found.error.js";
-import { eq } from "drizzle-orm";
+} from '@identity-and-access/infrastructure/database/drizzle.schema.js';
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
+import { eq } from 'drizzle-orm';
 
 export class GetLoggedInAccountQueryHandler {
   constructor(private readonly database: IdentityAndAccessDatabase) {}
@@ -18,8 +18,8 @@ export class GetLoggedInAccountQueryHandler {
 
     if (!snapshot) {
       throw new ResourceNotFoundError({
-        resource: "Account",
-        searchedByFieldName: "id",
+        resource: 'Account',
+        searchedByFieldName: 'id',
         searchedByValue: query.account.id,
       });
     }
@@ -32,5 +32,5 @@ export class GetLoggedInAccountQueryHandler {
 }
 
 type GetLoggedInAccountQuery = {
-  account: Pick<Account, "id">;
+  account: Pick<Account, 'id'>;
 };

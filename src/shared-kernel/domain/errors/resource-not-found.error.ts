@@ -1,8 +1,8 @@
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 
 type ExtensionMembers = Pick<
   ResourceNotFoundError,
-  "resource" | "searchedByFieldName" | "searchedByValue"
+  'resource' | 'searchedByFieldName' | 'searchedByValue'
 >;
 
 export class ResourceNotFoundError extends Error {
@@ -22,10 +22,10 @@ export class ResourceNotFoundError extends Error {
   constructor(input: ExtensionMembers) {
     super(`The ${input.resource} you are trying to access does not exist.`);
 
-    this.code = "resource-not-found";
+    this.code = 'resource-not-found';
     this.detail = this.message;
     this.status = 404;
-    this.title = "Resource Not Found";
+    this.title = 'Resource Not Found';
     this.timestamp = DateTime.now();
     this.pointer = `/data/attributes/${input.searchedByFieldName}`;
 

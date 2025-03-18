@@ -1,4 +1,4 @@
-import type { PasswordHasher } from "@identity-and-access/domain/ports/password-hasher.port.js";
+import type { PasswordHasher } from '@identity-and-access/domain/ports/password-hasher.port.js';
 
 // @TODO: only for testing purposes, find a better place for this file
 export class FakePasswordHasher implements PasswordHasher {

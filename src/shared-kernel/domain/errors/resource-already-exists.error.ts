@@ -1,8 +1,8 @@
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 
 type ExtensionMembers = Pick<
   ResourceAlreadyExistsError,
-  "resource" | "conflictingFieldName" | "conflictingFieldValue"
+  'resource' | 'conflictingFieldName' | 'conflictingFieldValue'
 >;
 
 export class ResourceAlreadyExistsError extends Error {
@@ -22,10 +22,10 @@ export class ResourceAlreadyExistsError extends Error {
   constructor(input: ExtensionMembers) {
     super(`The ${input.resource} you are trying to create already exists.`);
 
-    this.code = "resource-already-exists";
+    this.code = 'resource-already-exists';
     this.detail = this.message;
     this.status = 409;
-    this.title = "Resource Already Exists";
+    this.title = 'Resource Already Exists';
     this.timestamp = DateTime.now();
     this.pointer = `/data/attributes/${input.conflictingFieldName}`;
 

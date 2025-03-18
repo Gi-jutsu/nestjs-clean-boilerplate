@@ -1,15 +1,13 @@
-import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
-import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
+import { OutboxMessage } from '@shared-kernel/domain/outbox-message/aggregate-root.js';
+import type { OutboxMessageRepository } from '@shared-kernel/domain/outbox-message/repository.js';
 import {
   outboxMessageSchema,
   type SharedKernelDatabase,
-} from "@shared-kernel/infrastructure/database/drizzle.schema.js";
-import { inArray, sql } from "drizzle-orm";
+} from '@shared-kernel/infrastructure/database/drizzle.schema.js';
+import { inArray, sql } from 'drizzle-orm';
 
 export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
-  constructor(
-    private readonly database: SharedKernelDatabase
-  ) {}
+  constructor(private readonly database: SharedKernelDatabase) {}
 
   async findUnprocessedMessages() {
     return await this.database.transaction(async (trx) => {
@@ -30,8 +28,8 @@ export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
         .where(
           inArray(
             outboxMessageSchema.id,
-            snapshots.rows.map((s) => String(s.id))
-          )
+            snapshots.rows.map((s) => String(s.id)),
+          ),
         );
 
       return snapshots.rows.map((s) =>
@@ -41,7 +39,7 @@ export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
           id: s.id as string,
           payload: s.payload as Record<string, unknown>,
           processedAt: s.processed_at as Date | null,
-        })
+        }),
       );
     });
   }

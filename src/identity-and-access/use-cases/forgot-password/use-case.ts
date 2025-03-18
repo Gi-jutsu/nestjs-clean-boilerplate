@@ -1,8 +1,8 @@
-import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not-found.error.js";
-import type { Account } from "@identity-and-access/domain/account/aggregate-root.js";
-import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
-import { ForgotPasswordRequest } from "@identity-and-access/domain/forgot-password-request/aggregate-root.js";
-import type { ForgotPasswordRequestRepository } from "@identity-and-access/domain/forgot-password-request/repository.js";
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
+import type { Account } from '@identity-and-access/domain/account/aggregate-root.js';
+import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
+import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-password-request/aggregate-root.js';
+import type { ForgotPasswordRequestRepository } from '@identity-and-access/domain/forgot-password-request/repository.js';
 
 export class ForgotPasswordUseCase {
   constructor(
@@ -12,8 +12,7 @@ export class ForgotPasswordUseCase {
 
   async execute(command: ForgotPasswordCommand) {
     const account = await this.findAccountByEmailOrThrow(command.email);
-    const { hasBeenCreated, request } =
-      await this.findOrCreateForgotPasswordRequest(account);
+    const { hasBeenCreated, request } = await this.findOrCreateForgotPasswordRequest(account);
 
     if (!hasBeenCreated) {
       request.refresh();
@@ -27,8 +26,8 @@ export class ForgotPasswordUseCase {
     const account = await this.allAccounts.findByEmail(email);
     if (!account) {
       throw new ResourceNotFoundError({
-        resource: "Account",
-        searchedByFieldName: "email",
+        resource: 'Account',
+        searchedByFieldName: 'email',
         searchedByValue: email,
       });
     }
@@ -37,8 +36,7 @@ export class ForgotPasswordUseCase {
   }
 
   private async findOrCreateForgotPasswordRequest(account: Account) {
-    const existingRequest =
-      await this.allForgotPasswordRequests.findByAccountId(account.id);
+    const existingRequest = await this.allForgotPasswordRequests.findByAccountId(account.id);
 
     if (existingRequest) {
       return { hasBeenCreated: false, request: existingRequest };

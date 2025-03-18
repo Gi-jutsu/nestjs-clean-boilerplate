@@ -3,4 +3,4 @@ export interface JwtService {
   verify(token: string): Record<string, unknown>;
 }
 
-export const JwtServiceToken = Symbol("JwtService");
+export const JwtServiceToken = Symbol('JwtService');

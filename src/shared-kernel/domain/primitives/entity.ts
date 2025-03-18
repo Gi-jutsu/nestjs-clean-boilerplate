@@ -1,20 +1,16 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 
 interface EntityProperties {
   id: string;
 }
 
-interface CreateEntityProperties<
-  Properties extends Record<keyof Properties, unknown>
-> {
-  id?: EntityProperties["id"];
+interface CreateEntityProperties<Properties extends Record<keyof Properties, unknown>> {
+  id?: EntityProperties['id'];
   properties: Properties;
 }
 
-export abstract class Entity<
-  Properties extends Record<keyof Properties, unknown>
-> {
-  public readonly id: EntityProperties["id"];
+export abstract class Entity<Properties extends Record<keyof Properties, unknown>> {
+  public readonly id: EntityProperties['id'];
   protected readonly _properties: Properties;
 
   constructor({ id, properties }: CreateEntityProperties<Properties>) {
@@ -24,7 +20,7 @@ export abstract class Entity<
 
   static fromSnapshot<Constructor extends new (...args: any) => any>(
     this: Constructor,
-    snapshot: InstanceType<Constructor>["_properties"] & EntityProperties
+    snapshot: InstanceType<Constructor>['_properties'] & EntityProperties,
   ): InstanceType<Constructor> {
     const { id, ...properties } = snapshot;
 

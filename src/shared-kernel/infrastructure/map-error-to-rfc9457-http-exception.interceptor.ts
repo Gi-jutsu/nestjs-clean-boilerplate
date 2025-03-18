@@ -1,5 +1,5 @@
-import { ResourceAlreadyExistsError } from "@shared-kernel/domain/errors/resource-already-exists.error.js";
-import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not-found.error.js";
+import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import {
   BadRequestException,
   CallHandler,
@@ -11,19 +11,17 @@ import {
   Logger,
   NestInterceptor,
   NotFoundException,
-} from "@nestjs/common";
-import { DateTime } from "luxon";
-import { throwError } from "rxjs";
-import { catchError } from "rxjs/operators";
+} from '@nestjs/common';
+import { DateTime } from 'luxon';
+import { throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable()
 export class MapErrorToRfc9457HttpException implements NestInterceptor {
   private readonly logger = new Logger(MapErrorToRfc9457HttpException.name);
 
   intercept(_context: ExecutionContext, next: CallHandler) {
-    return next
-      .handle()
-      .pipe(catchError((error) => this.throwAsHttpException(error)));
+    return next.handle().pipe(catchError((error) => this.throwAsHttpException(error)));
   }
 
   private throwAsHttpException(error: unknown) {
@@ -47,14 +45,14 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
       () =>
         new HttpException(
           {
-            code: (error as any).code ?? "internal-server-error",
-            detail: (error as any).detail ?? "An unexpected error occurred.",
+            code: (error as any).code ?? 'internal-server-error',
+            detail: (error as any).detail ?? 'An unexpected error occurred.',
             status: (error as any).status ?? HttpStatus.INTERNAL_SERVER_ERROR,
             timestamp: (error as any).timestamp ?? DateTime.now().toISO(),
-            title: (error as any).title ?? "Internal Server Error",
+            title: (error as any).title ?? 'Internal Server Error',
           },
-          (error as any).status ?? HttpStatus.INTERNAL_SERVER_ERROR
-        )
+          (error as any).status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
     );
   }
 }

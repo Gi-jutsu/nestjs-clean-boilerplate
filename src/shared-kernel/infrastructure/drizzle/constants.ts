@@ -1,1 +1,1 @@
-export const DrizzlePostgresPoolToken = Symbol("DrizzlePostgresPool");
+export const DrizzlePostgresPoolToken = Symbol('DrizzlePostgresPool');

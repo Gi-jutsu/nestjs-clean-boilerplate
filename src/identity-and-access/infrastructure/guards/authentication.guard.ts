@@ -1,24 +1,19 @@
-import { PUBLIC_METADATA } from "@shared-kernel/infrastructure/decorators/public.decorator.js";
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
+import { PUBLIC_METADATA } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import {
   type JwtService,
   JwtServiceToken,
-} from "@identity-and-access/domain/ports/jwt-service.port.js";
-import { z } from "zod";
-import type { CurrentAccount } from "@identity-and-access/infrastructure/decorators/get-current-account.decorator.js";
+} from '@identity-and-access/domain/ports/jwt-service.port.js';
+import { z } from 'zod';
+import type { CurrentAccount } from '@identity-and-access/infrastructure/decorators/get-current-account.decorator.js';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
   constructor(
     @Inject(JwtServiceToken)
     private readonly jwt: JwtService,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
   ) {}
 
   private hasPublicDecorator(context: ExecutionContext): boolean {
@@ -35,7 +30,7 @@ export class AuthenticationGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    const token = request.cookies["token"];
+    const token = request.cookies['token'];
     if (!token) {
       return false;
     }

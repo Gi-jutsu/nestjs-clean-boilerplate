@@ -1,4 +1,4 @@
-import type { Account } from "./aggregate-root.js";
+import type { Account } from './aggregate-root.js';
 
 export interface AccountRepository {
   isEmailTaken(email: string): Promise<boolean>;
@@ -6,4 +6,4 @@ export interface AccountRepository {
   save(account: Account): Promise<void>;
 }
 
-export const AccountRepositoryToken = Symbol("AccountRepository");
+export const AccountRepositoryToken = Symbol('AccountRepository');

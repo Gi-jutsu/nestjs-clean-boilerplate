@@ -1,7 +1,7 @@
-import { AggregateRoot } from "@shared-kernel/domain/primitives/aggregate-root.js";
-import { DateTime } from "luxon";
-import { ForgotPasswordRequestCreatedDomainEvent } from "./events/forgot-password-request-created.domain-event.js";
-import { ForgotPasswordRequestRefreshedDomainEvent } from "./events/forgot-password-request-refreshed.domain-event.js";
+import { AggregateRoot } from '@shared-kernel/domain/primitives/aggregate-root.js';
+import { DateTime } from 'luxon';
+import { ForgotPasswordRequestCreatedDomainEvent } from './events/forgot-password-request-created.domain-event.js';
+import { ForgotPasswordRequestRefreshedDomainEvent } from './events/forgot-password-request-refreshed.domain-event.js';
 
 interface Properties {
   accountId: string;
@@ -27,7 +27,7 @@ export class ForgotPasswordRequest extends AggregateRoot<Properties> {
     forgotPasswordRequest.commit(
       new ForgotPasswordRequestCreatedDomainEvent({
         payload: forgotPasswordRequest.properties,
-      })
+      }),
     );
 
     return forgotPasswordRequest;
@@ -40,7 +40,7 @@ export class ForgotPasswordRequest extends AggregateRoot<Properties> {
     this.commit(
       new ForgotPasswordRequestRefreshedDomainEvent({
         payload: this.properties,
-      })
+      }),
     );
   }
 }

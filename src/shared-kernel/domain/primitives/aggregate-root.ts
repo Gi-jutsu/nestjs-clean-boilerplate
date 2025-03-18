@@ -1,8 +1,8 @@
-import { DomainEvent } from "./domain-event.js";
-import { Entity } from "./entity.js";
+import { DomainEvent } from './domain-event.js';
+import { Entity } from './entity.js';
 
 export abstract class AggregateRoot<
-  Properties extends Record<keyof Properties, unknown>
+  Properties extends Record<keyof Properties, unknown>,
 > extends Entity<Properties> {
   private readonly _events: DomainEvent[] = [];
 

@@ -1,6 +1,6 @@
-import type { DomainEvent } from "@shared-kernel/domain/primitives/domain-event.js";
-import { Entity } from "@shared-kernel/domain/primitives/entity.js";
-import { DateTime } from "luxon";
+import type { DomainEvent } from '@shared-kernel/domain/primitives/domain-event.js';
+import { Entity } from '@shared-kernel/domain/primitives/entity.js';
+import { DateTime } from 'luxon';
 
 interface Properties {
   eventType: string;

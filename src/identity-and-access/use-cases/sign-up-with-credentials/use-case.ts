@@ -1,21 +1,21 @@
-import { ResourceAlreadyExistsError } from "@shared-kernel/domain/errors/resource-already-exists.error.js";
-import { Account } from "@identity-and-access/domain/account/aggregate-root.js";
-import type { AccountRepository } from "@identity-and-access/domain/account/repository.js";
-import type { PasswordHasher } from "@identity-and-access/domain/ports/password-hasher.port.js";
+import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
+import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
+import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
+import type { PasswordHasher } from '@identity-and-access/domain/ports/password-hasher.port.js';
 
 export class SignUpWithCredentialsUseCase {
   constructor(
     private readonly allAccounts: AccountRepository,
-    private readonly passwordHasher: PasswordHasher
+    private readonly passwordHasher: PasswordHasher,
   ) {}
 
   async execute(command: SignInWithCredentialsCommand) {
     const isEmailTaken = await this.allAccounts.isEmailTaken(command.email);
     if (isEmailTaken) {
       throw new ResourceAlreadyExistsError({
-        conflictingFieldName: "email",
+        conflictingFieldName: 'email',
         conflictingFieldValue: command.email,
-        resource: "Account",
+        resource: 'Account',
       });
     }
 
