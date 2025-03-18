@@ -22,6 +22,7 @@ import { AuthenticationGuard } from "./infrastructure/guards/authentication.guar
 import { GetLoggedInAccountHttpController } from "./queries/get-logged-in-account/http.controller.js";
 import { GetLoggedInAccountQueryHandler } from "./queries/get-logged-in-account/query-handler.js";
 import { DrizzlePostgresPoolToken } from "@shared-kernel/infrastructure/drizzle/constants.js";
+import { DomainEventPublisherToken } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
 
 @Module({
   controllers: [
@@ -45,11 +46,13 @@ import { DrizzlePostgresPoolToken } from "@shared-kernel/infrastructure/drizzle/
     /** Repositories */
     {
       provide: AccountRepositoryToken,
-      useClass: DrizzleAccountRepository,
+      useFactory: createFactoryFromConstructor(DrizzleAccountRepository),
+      inject: [DrizzlePostgresPoolToken, DomainEventPublisherToken],
     },
     {
       provide: ForgotPasswordRequestRepositoryToken,
-      useClass: DrizzleForgotPasswordRequestRepository,
+      useFactory: createFactoryFromConstructor(DrizzleForgotPasswordRequestRepository),
+      inject: [DrizzlePostgresPoolToken, DomainEventPublisherToken],
     },
 
     /** Ports */

@@ -4,20 +4,15 @@ import {
   ForgotPasswordRequestSchema,
   type IdentityAndAccessDatabase,
 } from "@identity-and-access/infrastructure/database/drizzle.schema.js";
-import { Inject, Injectable } from "@nestjs/common";
-import { DomainEventPublisherToken, type DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
-import { DrizzlePostgresPoolToken } from "@shared-kernel/infrastructure/drizzle/constants.js";
+import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
 import { eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 
-@Injectable()
 export class DrizzleForgotPasswordRequestRepository
   implements ForgotPasswordRequestRepository
 {
   constructor(
-    @Inject(DrizzlePostgresPoolToken)
     private readonly database: IdentityAndAccessDatabase,
-    @Inject(DomainEventPublisherToken)
     private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 

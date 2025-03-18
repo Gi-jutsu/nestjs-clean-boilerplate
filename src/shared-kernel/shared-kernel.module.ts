@@ -18,6 +18,7 @@ import { ProcessOutboxMessagesScheduler } from "./use-cases/process-outbox-messa
 import { ProcessOutboxMessagesUseCase } from "./use-cases/process-outbox-messages/use-case.js";
 import { DomainEventPublisherToken } from "./domain/ports/domain-event-publisher.port.js";
 import { OutboxDomainEventPublisher } from "./infrastructure/outbox-domain-event-publisher.adapter.js";
+import { DrizzlePostgresPoolToken } from "./infrastructure/drizzle/constants.js";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -78,7 +79,8 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
     },
     {
       provide: OutboxMessageRepositoryToken,
-      useClass: DrizzleOutboxMessageRepository,
+      useFactory: createFactoryFromConstructor(DrizzleOutboxMessageRepository),
+      inject: [DrizzlePostgresPoolToken],
     },
     {
       provide: EventEmitterToken,
