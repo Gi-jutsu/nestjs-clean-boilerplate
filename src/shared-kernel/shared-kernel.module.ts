@@ -1,5 +1,5 @@
 import { createFactoryFromConstructor } from '@shared-kernel/utils/create-factory-from-constructor.js';
-import { Global, Module } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
@@ -19,6 +19,7 @@ import { ProcessOutboxMessagesUseCase } from './use-cases/process-outbox-message
 import { DomainEventPublisherToken } from './domain/ports/domain-event-publisher.port.js';
 import { OutboxDomainEventPublisher } from './infrastructure/outbox-domain-event-publisher.adapter.js';
 import { DrizzlePostgresPoolToken } from './infrastructure/drizzle/constants.js';
+import { CorrelationIdMiddleware } from './infrastructure/correlation-id.middleware.js';
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -101,6 +102,15 @@ const ENVIRONMENT_VARIABLES_SCHEMA = z
       inject: [OutboxMessageRepositoryToken, EventEmitter2],
     },
   ],
-  exports: [DomainEventPublisherToken, DrizzleModule, MailerToken, OutboxMessageRepositoryToken],
+  exports: [
+    DomainEventPublisherToken,
+    DrizzleModule,
+    MailerToken,
+    OutboxMessageRepositoryToken,
+  ],
 })
-export class SharedKernelModule {}
+export class SharedKernelModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

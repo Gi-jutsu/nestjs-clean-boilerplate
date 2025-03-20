@@ -1,4 +1,10 @@
-import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  Logger,
+  NestInterceptor,
+} from '@nestjs/common';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
@@ -10,14 +16,20 @@ export class HttpLoggerInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse();
     const start = Date.now();
 
-    this.logger.debug(`[Req] ${request.method} ${request.url}`);
+    const correlationId = request.headers['x-correlation-id'];
+    // ANSI escape code for gray color
+    const grayCorrelationId = `\x1b[90m(correlation_id: ${correlationId})\x1b[0m`;
+
+    this.logger.debug(
+      `[Request] ${grayCorrelationId} ${request.method} ${request.url}`,
+    );
 
     return next.handle().pipe(
       tap(() => {
         const executionTime = Date.now() - start;
 
         this.logger.debug(
-          `[Res] ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`,
+          `[Response] (correlation_id: ${grayCorrelationId}) ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`,
         );
       }),
     );

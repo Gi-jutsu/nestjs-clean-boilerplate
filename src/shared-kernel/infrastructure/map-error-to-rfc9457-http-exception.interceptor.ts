@@ -20,12 +20,22 @@ import { catchError } from 'rxjs/operators';
 export class MapErrorToRfc9457HttpException implements NestInterceptor {
   private readonly logger = new Logger(MapErrorToRfc9457HttpException.name);
 
-  intercept(_context: ExecutionContext, next: CallHandler) {
-    return next.handle().pipe(catchError((error) => this.throwAsHttpException(error)));
+  intercept(context: ExecutionContext, next: CallHandler) {
+    const request = context.switchToHttp().getRequest();
+    const correlationId = request.headers['x-correlation-id'] || 'N/A';
+
+    return next
+      .handle()
+      .pipe(
+        catchError((error) => this.throwAsHttpException(error, correlationId)),
+      );
   }
 
-  private throwAsHttpException(error: unknown) {
-    this.logger.error(error);
+  private throwAsHttpException(error: unknown, correlationId: string) {
+    const colorizedCorrelationId = `\x1b[90m(correlation_id: ${correlationId})\x1b[0m`;
+    const colorizedError = `\x1b[31m${error}\x1b[0m`;
+
+    this.logger.error(`${colorizedCorrelationId} ${colorizedError}`);
 
     // @TODO: Map ValidationErrors to RFC9457
     // for now, we are just returning the error as is

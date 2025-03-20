@@ -14,6 +14,16 @@ describe('ApplicationModule', () => {
     server.close();
   });
 
+  describe('Correlation ID', () => {
+    it('should return the correlation ID in the response header', async () => {
+      const client = supertest(server);
+
+      const response = await client.get('/health-check');
+
+      expect(response.header['x-correlation-id']).toBeDefined();
+    });
+  });
+
   describe('Rate Limiting', () => {
     it('should return 429 after exceeding rate limit (100 requests per minute)', async () => {
       const client = supertest(server);
