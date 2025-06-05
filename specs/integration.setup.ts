@@ -5,7 +5,12 @@ let postgreSqlContainer: Awaited<
 >;
 
 export async function setup() {
-  postgreSqlContainer = await bootstrapPostgresSqlContainer();
+  try {
+    postgreSqlContainer = await bootstrapPostgresSqlContainer();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
 }
 
 export async function teardown() {

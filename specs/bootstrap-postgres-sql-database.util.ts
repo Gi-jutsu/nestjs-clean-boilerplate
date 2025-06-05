@@ -6,7 +6,7 @@ import pg from "pg";
 import { accounts } from "./fixtures/account.fixture.js";
 
 export async function bootstrapPostgresSqlContainer() {
-  const postgreSqlContainer = await new PostgreSqlContainer().start();
+  const postgreSqlContainer = await new PostgreSqlContainer('postgres:latest').start();
   const postgreSqlClient = new pg.Client({
     connectionString: postgreSqlContainer.getConnectionUri(),
   });
