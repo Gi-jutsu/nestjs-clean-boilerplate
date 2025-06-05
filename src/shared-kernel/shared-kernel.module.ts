@@ -19,10 +19,18 @@ import { OutboxDomainEventPublisher } from './infrastructure/outbox-domain-event
 import { HealthCheckHttpController } from './use-cases/health-check/http.controller.js';
 import { ProcessOutboxMessagesScheduler } from './use-cases/process-outbox-messages/scheduler.js';
 import { ProcessOutboxMessagesUseCase } from './use-cases/process-outbox-messages/use-case.js';
-import { createNestProvider } from './utils/create-nest-provider.js';
+import {
+  type BrandedInjectionToken,
+  createNestProvider,
+} from './utils/create-nest-provider.js';
+import { HealthCheckUseCase } from './use-cases/health-check/use-case.js';
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
+
+const NodeJsProcessToken = Symbol(
+  'Process',
+) as BrandedInjectionToken<NodeJS.Process>;
 
 @Global()
 @Module({
@@ -59,6 +67,10 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       provide: APP_INTERCEPTOR,
       useClass: MapErrorToRfc9457HttpException,
     },
+    {
+      provide: NodeJsProcessToken,
+      useValue: process,
+    },
 
     createNestProvider(
       OutboxDomainEventPublisher,
@@ -71,6 +83,11 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       [DrizzlePostgresPoolToken],
       OutboxMessageRepositoryToken,
     ),
+
+    createNestProvider(HealthCheckUseCase, [
+      DrizzlePostgresPoolToken,
+      NodeJsProcessToken,
+    ]),
 
     // @TODO: It should be a controller
     {
