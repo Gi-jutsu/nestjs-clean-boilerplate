@@ -1,6 +1,13 @@
 import { sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { boolean, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { randomUUID } from 'node:crypto';
 
 export const accountSchema = pgTable(
@@ -38,7 +45,11 @@ export const ForgotPasswordRequestSchema = pgTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (table) => [uniqueIndex('idx_unique_account_forgot_password_request').on(table.accountId)],
+  (table) => [
+    uniqueIndex('idx_unique_account_forgot_password_request').on(
+      table.accountId,
+    ),
+  ],
 );
 
 export type IdentityAndAccessDatabase = NodePgDatabase<{

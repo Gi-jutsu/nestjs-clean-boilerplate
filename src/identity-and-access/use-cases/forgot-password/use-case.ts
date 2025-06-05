@@ -12,7 +12,8 @@ export class ForgotPasswordUseCase {
 
   async execute(command: ForgotPasswordCommand) {
     const account = await this.findAccountByEmailOrThrow(command.email);
-    const { hasBeenCreated, request } = await this.findOrCreateForgotPasswordRequest(account);
+    const { hasBeenCreated, request } =
+      await this.findOrCreateForgotPasswordRequest(account);
 
     if (!hasBeenCreated) {
       request.refresh();
@@ -36,7 +37,8 @@ export class ForgotPasswordUseCase {
   }
 
   private async findOrCreateForgotPasswordRequest(account: Account) {
-    const existingRequest = await this.allForgotPasswordRequests.findByAccountId(account.id);
+    const existingRequest =
+      await this.allForgotPasswordRequests.findByAccountId(account.id);
 
     if (existingRequest) {
       return { hasBeenCreated: false, request: existingRequest };

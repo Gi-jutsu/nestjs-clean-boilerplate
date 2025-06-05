@@ -22,7 +22,10 @@ import { GetLoggedInAccountHttpController } from './queries/get-logged-in-accoun
 import { GetLoggedInAccountQueryHandler } from './queries/get-logged-in-account/query-handler.js';
 import { DrizzlePostgresPoolToken } from '@shared-kernel/infrastructure/drizzle/constants.js';
 import { DomainEventPublisherToken } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
-import { BrandedInjectionToken, createNestProvider } from '@shared-kernel/utils/create-nest-provider.js';
+import {
+  BrandedInjectionToken,
+  createNestProvider,
+} from '@shared-kernel/utils/create-nest-provider.js';
 
 @Module({
   controllers: [
@@ -47,13 +50,13 @@ import { BrandedInjectionToken, createNestProvider } from '@shared-kernel/utils/
     createNestProvider(
       DrizzleAccountRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
-      AccountRepositoryToken
+      AccountRepositoryToken,
     ),
 
     createNestProvider(
       DrizzleForgotPasswordRequestRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
-      ForgotPasswordRequestRepositoryToken
+      ForgotPasswordRequestRepositoryToken,
     ),
 
     /** Ports */
@@ -100,8 +103,8 @@ import { BrandedInjectionToken, createNestProvider } from '@shared-kernel/utils/
 
     createNestProvider(SignUpWithCredentialsUseCase, [
       AccountRepositoryToken,
-      PasswordHasherToken
+      PasswordHasherToken,
     ]),
   ],
 })
-export class IdentityAndAccessModule { }
+export class IdentityAndAccessModule {}

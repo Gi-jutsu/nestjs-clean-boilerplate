@@ -2,7 +2,9 @@ import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-passwo
 import type { ForgotPasswordRequestRepository } from '@identity-and-access/domain/forgot-password-request/repository.js';
 import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
 
-export class InMemoryForgotPasswordRequestRepository implements ForgotPasswordRequestRepository {
+export class InMemoryForgotPasswordRequestRepository
+  implements ForgotPasswordRequestRepository
+{
   snapshots = new Map();
 
   constructor(private readonly domainEventPublisher: DomainEventPublisher) {}

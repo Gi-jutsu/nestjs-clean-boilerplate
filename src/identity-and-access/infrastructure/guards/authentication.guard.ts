@@ -1,5 +1,10 @@
 import { PUBLIC_METADATA } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   type JwtService,

@@ -1,4 +1,4 @@
-import { InjectionToken, Provider } from "@nestjs/common";
+import { InjectionToken, Provider } from '@nestjs/common';
 
 type Branded<T, Brand> = T & { __brand: Brand };
 
@@ -7,13 +7,13 @@ type ClassConstructor<T = any> = new (...args: any[]) => T;
 
 type ExpectedTokensArray<C extends ClassConstructor> =
   ConstructorParameters<C> extends [...infer Params]
-  ? { [K in keyof Params]: Pick<BrandedInjectionToken<Params[K]>, '__brand'> }
-  : [];
+    ? { [K in keyof Params]: Pick<BrandedInjectionToken<Params[K]>, '__brand'> }
+    : [];
 
 /**
  * Ensures that a NestJS provider is created with the correct injection tokens
  * based on the constructor parameters of the provided class.
- * 
+ *
  * @example
  * // Step 1: Define the interface and token
  * export interface AccountRepository {
@@ -37,12 +37,8 @@ type ExpectedTokensArray<C extends ClassConstructor> =
  */
 export function createNestProvider<
   C extends ClassConstructor,
-  Tokens extends ExpectedTokensArray<C>
->(
-  useClass: C,
-  inject: Tokens,
-  provide?: InjectionToken,
-): Provider {
+  Tokens extends ExpectedTokensArray<C>,
+>(useClass: C, inject: Tokens, provide?: InjectionToken): Provider {
   return {
     provide: provide ?? useClass,
     useFactory: (...args: any[]) => new useClass(...args),

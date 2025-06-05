@@ -8,7 +8,9 @@ import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-ev
 import { eq } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 
-export class DrizzleForgotPasswordRequestRepository implements ForgotPasswordRequestRepository {
+export class DrizzleForgotPasswordRequestRepository
+  implements ForgotPasswordRequestRepository
+{
   constructor(
     private readonly database: IdentityAndAccessDatabase,
     private readonly domainEventPublisher: DomainEventPublisher,

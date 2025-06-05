@@ -16,10 +16,12 @@ describe('GetLoggedInAccountHttpController', () => {
 
   describe('GET /auth/me', () => {
     it('should return 200 with the logged in account details', async () => {
-      const signInResponse = await supertest(server).post('/auth/sign-in').send({
-        email: 'dylan@call-me-dev.com',
-        password: 'password',
-      });
+      const signInResponse = await supertest(server)
+        .post('/auth/sign-in')
+        .send({
+          email: 'dylan@call-me-dev.com',
+          password: 'password',
+        });
 
       const response = await supertest(server)
         .get('/auth/me')

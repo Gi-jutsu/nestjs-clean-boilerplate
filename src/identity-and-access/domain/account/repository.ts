@@ -7,4 +7,6 @@ export interface AccountRepository {
   save(account: Account): Promise<void>;
 }
 
-export const AccountRepositoryToken = Symbol('AccountRepository') as BrandedInjectionToken<AccountRepository>;
+export const AccountRepositoryToken = Symbol(
+  'AccountRepository',
+) as BrandedInjectionToken<AccountRepository>;

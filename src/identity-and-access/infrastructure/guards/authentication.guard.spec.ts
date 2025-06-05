@@ -8,7 +8,8 @@ describe('AuthenticationGuard', () => {
   describe('when the route is decorated with @Public', () => {
     it('should allow unauthenticated requests to access the route', () => {
       // Given
-      const { context, guard, mockHasPublicDecorator } = createSystemUnderTest();
+      const { context, guard, mockHasPublicDecorator } =
+        createSystemUnderTest();
 
       mockHasPublicDecorator(true);
 
@@ -35,7 +36,8 @@ describe('AuthenticationGuard', () => {
 
   it('should not allow requests with an invalid token to access private routes', () => {
     // Given
-    const { context, guard, mockHttpRequest, mockJwtVerify } = createSystemUnderTest();
+    const { context, guard, mockHttpRequest, mockJwtVerify } =
+      createSystemUnderTest();
 
     mockHttpRequest({ cookies: { token: 'invalid-token' } });
     mockJwtVerify({});
@@ -49,7 +51,8 @@ describe('AuthenticationGuard', () => {
 
   it('should allow requests with a valid token to access private routes', () => {
     // Given
-    const { context, guard, mockHttpRequest, mockJwtVerify } = createSystemUnderTest();
+    const { context, guard, mockHttpRequest, mockJwtVerify } =
+      createSystemUnderTest();
 
     mockHttpRequest({ cookies: { token: 'valid-token' } });
     mockJwtVerify({ sub: 'account-id' });
@@ -63,7 +66,8 @@ describe('AuthenticationGuard', () => {
 
   it('should inject the token claims into the request object', () => {
     // Given
-    const { context, guard, mockHttpRequest, mockJwtVerify } = createSystemUnderTest();
+    const { context, guard, mockHttpRequest, mockJwtVerify } =
+      createSystemUnderTest();
 
     mockHttpRequest({ cookies: { token: 'valid-token' } });
     mockJwtVerify({ sub: 'account-id' });
@@ -84,7 +88,9 @@ describe('AuthenticationGuard', () => {
 function createSystemUnderTest() {
   // ExecutionContext (from NestJS)
   const mockedGetRequest = vi.fn().mockReturnValue({ cookies: {} });
-  const mockedSwitchToHttp = vi.fn().mockReturnValue({ getRequest: mockedGetRequest });
+  const mockedSwitchToHttp = vi
+    .fn()
+    .mockReturnValue({ getRequest: mockedGetRequest });
 
   // Reflector (from NestJS)
   const mockedGetAllAndOverride = vi.fn();
@@ -111,10 +117,13 @@ function createSystemUnderTest() {
     } as unknown as ExecutionContext,
     guard,
 
-    mockHasPublicDecorator: (value: boolean) => mockedGetAllAndOverride.mockReturnValueOnce(value),
+    mockHasPublicDecorator: (value: boolean) =>
+      mockedGetAllAndOverride.mockReturnValueOnce(value),
 
-    mockHttpRequest: (request: Partial<Request>) => mockedGetRequest.mockReturnValue(request),
+    mockHttpRequest: (request: Partial<Request>) =>
+      mockedGetRequest.mockReturnValue(request),
 
-    mockJwtVerify: (claims: Record<string, unknown>) => mockedJwtVerify.mockReturnValueOnce(claims),
+    mockJwtVerify: (claims: Record<string, unknown>) =>
+      mockedJwtVerify.mockReturnValueOnce(claims),
   };
 }
