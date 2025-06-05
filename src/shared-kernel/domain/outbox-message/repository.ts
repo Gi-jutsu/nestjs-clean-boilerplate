@@ -1,3 +1,4 @@
+import { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
 import type { OutboxMessage } from './aggregate-root.js';
 
 export interface OutboxMessageRepository {
@@ -5,4 +6,4 @@ export interface OutboxMessageRepository {
   save(message: OutboxMessage[]): Promise<void>;
 }
 
-export const OutboxMessageRepositoryToken = Symbol('OutboxMessageRepository');
+export const OutboxMessageRepositoryToken = Symbol('OutboxMessageRepository') as BrandedInjectionToken<OutboxMessageRepository>;

@@ -1,7 +1,6 @@
-import { createFactoryFromConstructor } from '@shared-kernel/utils/create-factory-from-constructor.js';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OutboxMessageRepositoryToken } from '@shared-kernel/domain/outbox-message/repository.js';
+import { CONFIGURATION_SERVICE_TOKEN } from '@nestjs/config/dist/config.constants.js';
 import { MailerToken } from '@shared-kernel/domain/ports/mailer.port.js';
 import { AccountRepositoryToken } from './domain/account/repository.js';
 import { ForgotPasswordRequestRepositoryToken } from './domain/forgot-password-request/repository.js';
@@ -23,6 +22,7 @@ import { GetLoggedInAccountHttpController } from './queries/get-logged-in-accoun
 import { GetLoggedInAccountQueryHandler } from './queries/get-logged-in-account/query-handler.js';
 import { DrizzlePostgresPoolToken } from '@shared-kernel/infrastructure/drizzle/constants.js';
 import { DomainEventPublisherToken } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
+import { BrandedInjectionToken, createNestProvider } from '@shared-kernel/utils/create-nest-provider.js';
 
 @Module({
   controllers: [
@@ -44,16 +44,17 @@ import { DomainEventPublisherToken } from '@shared-kernel/domain/ports/domain-ev
     SendForgotPasswordEmailDomainEventController,
 
     /** Repositories */
-    {
-      provide: AccountRepositoryToken,
-      useFactory: createFactoryFromConstructor(DrizzleAccountRepository),
-      inject: [DrizzlePostgresPoolToken, DomainEventPublisherToken],
-    },
-    {
-      provide: ForgotPasswordRequestRepositoryToken,
-      useFactory: createFactoryFromConstructor(DrizzleForgotPasswordRequestRepository),
-      inject: [DrizzlePostgresPoolToken, DomainEventPublisherToken],
-    },
+    createNestProvider(
+      DrizzleAccountRepository,
+      [DrizzlePostgresPoolToken, DomainEventPublisherToken],
+      AccountRepositoryToken
+    ),
+
+    createNestProvider(
+      DrizzleForgotPasswordRequestRepository,
+      [DrizzlePostgresPoolToken, DomainEventPublisherToken],
+      ForgotPasswordRequestRepositoryToken
+    ),
 
     /** Ports */
     {
@@ -76,37 +77,31 @@ import { DomainEventPublisherToken } from '@shared-kernel/domain/ports/domain-ev
     },
 
     /** Query handlers */
-    {
-      provide: GetLoggedInAccountQueryHandler,
-      useFactory: createFactoryFromConstructor(GetLoggedInAccountQueryHandler),
-      inject: [DrizzlePostgresPoolToken],
-    },
+    createNestProvider(GetLoggedInAccountQueryHandler, [
+      DrizzlePostgresPoolToken,
+    ]),
 
     /** Use cases */
-    {
-      provide: ForgotPasswordUseCase,
-      useFactory: createFactoryFromConstructor(ForgotPasswordUseCase),
-      inject: [
-        AccountRepositoryToken,
-        ForgotPasswordRequestRepositoryToken,
-        OutboxMessageRepositoryToken,
-      ],
-    },
-    {
-      provide: SendForgotPasswordEmailUseCase,
-      useFactory: createFactoryFromConstructor(SendForgotPasswordEmailUseCase),
-      inject: [ConfigService, MailerToken],
-    },
-    {
-      provide: SignInWithCredentialsUseCase,
-      useFactory: createFactoryFromConstructor(SignInWithCredentialsUseCase),
-      inject: [AccountRepositoryToken, JwtServiceToken, PasswordHasherToken],
-    },
-    {
-      provide: SignUpWithCredentialsUseCase,
-      useFactory: createFactoryFromConstructor(SignUpWithCredentialsUseCase),
-      inject: [AccountRepositoryToken, PasswordHasherToken],
-    },
+    createNestProvider(ForgotPasswordUseCase, [
+      AccountRepositoryToken,
+      ForgotPasswordRequestRepositoryToken,
+    ]),
+
+    createNestProvider(SendForgotPasswordEmailUseCase, [
+      ConfigService as unknown as BrandedInjectionToken<ConfigService>,
+      MailerToken,
+    ]),
+
+    createNestProvider(SignInWithCredentialsUseCase, [
+      AccountRepositoryToken,
+      JwtServiceToken,
+      PasswordHasherToken,
+    ]),
+
+    createNestProvider(SignUpWithCredentialsUseCase, [
+      AccountRepositoryToken,
+      PasswordHasherToken
+    ]),
   ],
 })
-export class IdentityAndAccessModule {}
+export class IdentityAndAccessModule { }

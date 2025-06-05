@@ -1,3 +1,5 @@
+import type { BrandedInjectionToken } from "@shared-kernel/utils/create-nest-provider.js";
+
 export interface Mailer {
   sendEmailWithTemplate(
     to: string,
@@ -6,4 +8,4 @@ export interface Mailer {
   ): Promise<void>;
 }
 
-export const MailerToken = Symbol('Mailer');
+export const MailerToken = Symbol('Mailer') as BrandedInjectionToken<Mailer>;

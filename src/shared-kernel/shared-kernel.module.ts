@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { createFactoryFromConstructor } from "@shared-kernel/utils/create-factory-from-constructor.js";
 import { EnvironmentKeys, EnvironmentSchema } from "./environment.js";
 import { DomainEventPublisherToken } from "./domain/ports/domain-event-publisher.port.js";
 import { EventEmitterToken } from "./domain/ports/event-emitter.port.js";
@@ -20,6 +19,7 @@ import { OutboxDomainEventPublisher } from "./infrastructure/outbox-domain-event
 import { HealthCheckHttpController } from "./use-cases/health-check/http.controller.js";
 import { ProcessOutboxMessagesScheduler } from "./use-cases/process-outbox-messages/scheduler.js";
 import { ProcessOutboxMessagesUseCase } from "./use-cases/process-outbox-messages/use-case.js";
+import { createNestProvider } from "./utils/create-nest-provider.js";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -59,33 +59,44 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       provide: APP_INTERCEPTOR,
       useClass: MapErrorToRfc9457HttpException,
     },
+
+    createNestProvider(
+      OutboxDomainEventPublisher,
+      [OutboxMessageRepositoryToken],
+      DomainEventPublisherToken,
+    ),
+
+    createNestProvider(
+      DrizzleOutboxMessageRepository,
+      [DrizzlePostgresPoolToken],
+      OutboxMessageRepositoryToken
+    ),
+
+    // @TODO: It should be a controller
     {
-      provide: DomainEventPublisherToken,
-      useFactory: createFactoryFromConstructor(OutboxDomainEventPublisher),
-      inject: [OutboxMessageRepositoryToken],
+      provide: ProcessOutboxMessagesScheduler,
+      useFactory: (...args: ConstructorParameters<typeof ProcessOutboxMessagesScheduler>) =>
+        new ProcessOutboxMessagesScheduler(...args),
+      inject: [ConfigService, ProcessOutboxMessagesUseCase],
     },
+
+    // @TODO: EventEmitter2 has no BrandedInjectionToken 
+    // find a way to use createNestProvider(...)
     {
-      provide: OutboxMessageRepositoryToken,
-      useFactory: createFactoryFromConstructor(DrizzleOutboxMessageRepository),
-      inject: [DrizzlePostgresPoolToken],
+      provide: ProcessOutboxMessagesUseCase,
+      useFactory: (...args: ConstructorParameters<typeof ProcessOutboxMessagesUseCase>) =>
+        new ProcessOutboxMessagesUseCase(...args),
+      inject: [OutboxMessageRepositoryToken, EventEmitter2],
     },
+
     {
       provide: EventEmitterToken,
       useValue: (await import('@nestjs/event-emitter')).EventEmitter2,
     },
+
     {
       provide: MailerToken,
       useClass: ConsoleMailer,
-    },
-    {
-      provide: ProcessOutboxMessagesScheduler,
-      useFactory: createFactoryFromConstructor(ProcessOutboxMessagesScheduler),
-      inject: [ConfigService, ProcessOutboxMessagesUseCase],
-    },
-    {
-      provide: ProcessOutboxMessagesUseCase,
-      useFactory: createFactoryFromConstructor(ProcessOutboxMessagesUseCase),
-      inject: [OutboxMessageRepositoryToken, EventEmitter2],
     },
   ],
   exports: [
