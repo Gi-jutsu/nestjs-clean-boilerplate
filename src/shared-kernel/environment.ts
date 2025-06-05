@@ -1,19 +1,17 @@
 import { z, ZodRawShape } from "zod";
 
-const DEFAULT_OUTBOX_PROCESSING_INTERVAL = 60_000; // 60 seconds in milliseconds
-
 export const shape = {
-  "API_BASE_URL": z.string().url(),
-  "API_HTTP_HOST": z.string(),
-  "API_HTTP_PORT": z.string(),
-  "API_HTTP_SCHEME": z.enum(["http", "https"]),
+  "API_BASE_URL": z.string().url().default("http://0.0.0.0:8080"),
+  "API_HTTP_HOST": z.string().default("0.0.0.0"),
+  "API_HTTP_PORT": z.string().default("8080"),
+  "API_HTTP_SCHEME": z.enum(["http", "https"]).default("http"),
   "DATABASE_URL": z.string().url(),
   "JWT_SECRET": z.string(),
   "OUTBOX_PROCESSING_INTERVAL": z.coerce
     .number()
     .int()
     .positive()
-    .default(DEFAULT_OUTBOX_PROCESSING_INTERVAL),
+    .default(60_000), // Default to 60 seconds in milliseconds
 
   // Add any additional environment variables here
   // e.g.:
@@ -26,19 +24,7 @@ export const EnvironmentKeys: EnvironmentKeys = Object.keys(shape).reduce(
   {} as EnvironmentKeys
 );
 
-export const EnvironmentSchema = z
-  .object(shape)
-  .transform((data) => ({
-    ...data,
-    [EnvironmentKeys.API_BASE_URL]: buildApiBaseUrl(data),
-  }));
-
-function buildApiBaseUrl(env: z.infer<z.ZodObject<EnvironmentShape>>) {
-  const host = env[EnvironmentKeys.API_HTTP_HOST];
-  const port = env[EnvironmentKeys.API_HTTP_PORT];
-  const scheme = env[EnvironmentKeys.API_HTTP_SCHEME];
-  return `${scheme}://${host}:${port}`;
-}
+export const EnvironmentSchema = z.object(shape)
 
 type EnvironmentShape = typeof shape;
 type EnvironmentKeys = KeyIdentityMap<EnvironmentShape>;
