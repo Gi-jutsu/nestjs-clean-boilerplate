@@ -1,10 +1,10 @@
 import { ConfigService } from "@nestjs/config";
 import { OnApplicationBootstrap, OnApplicationShutdown } from "@nestjs/common";
 import { ProcessOutboxMessagesUseCase } from "./use-case.js";
+import { EnvironmentKeys } from "@shared-kernel/environment.js";
 
 export class ProcessOutboxMessagesScheduler
-  implements OnApplicationBootstrap, OnApplicationShutdown
-{
+  implements OnApplicationBootstrap, OnApplicationShutdown {
   private _intervalId: NodeJS.Timeout;
   private readonly _interval: number;
 
@@ -12,7 +12,7 @@ export class ProcessOutboxMessagesScheduler
     private readonly config: ConfigService,
     private readonly useCase: ProcessOutboxMessagesUseCase
   ) {
-    this._interval = this.config.getOrThrow("OUTBOX_PROCESSING_INTERVAL");
+    this._interval = this.config.getOrThrow(EnvironmentKeys.OUTBOX_PROCESSING_INTERVAL);
   }
 
   async handle() {
