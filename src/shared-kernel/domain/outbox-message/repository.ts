@@ -6,4 +6,6 @@ export interface OutboxMessageRepository {
   save(message: OutboxMessage[]): Promise<void>;
 }
 
-export const OutboxMessageRepositoryToken = Symbol('OutboxMessageRepository') as BrandedInjectionToken<OutboxMessageRepository>;
+export const OutboxMessageRepositoryToken = Symbol(
+  'OutboxMessageRepository',
+) as BrandedInjectionToken<OutboxMessageRepository>;

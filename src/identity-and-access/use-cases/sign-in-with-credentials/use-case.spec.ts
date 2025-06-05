@@ -94,7 +94,9 @@ describe('SignInWithCredentialsUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
-  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(allOutboxMessages);
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
+    allOutboxMessages,
+  );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
   const jwt = {
@@ -103,7 +105,11 @@ function createSystemUnderTest() {
   };
   const passwordHasher = new FakePasswordHasher();
 
-  const useCase = new SignInWithCredentialsUseCase(allAccounts, jwt, passwordHasher);
+  const useCase = new SignInWithCredentialsUseCase(
+    allAccounts,
+    jwt,
+    passwordHasher,
+  );
 
   return {
     allAccounts,

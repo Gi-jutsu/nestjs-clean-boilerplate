@@ -79,12 +79,17 @@ describe('SignUpWithCredentialsUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
-  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(allOutboxMessages);
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
+    allOutboxMessages,
+  );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
   const fakePasswordHasher = new FakePasswordHasher();
 
-  const useCase = new SignUpWithCredentialsUseCase(allAccounts, fakePasswordHasher);
+  const useCase = new SignUpWithCredentialsUseCase(
+    allAccounts,
+    fakePasswordHasher,
+  );
 
   return { allAccounts, fakePasswordHasher, useCase };
 }

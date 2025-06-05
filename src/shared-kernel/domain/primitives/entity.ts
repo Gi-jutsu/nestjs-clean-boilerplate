@@ -4,12 +4,16 @@ interface EntityProperties {
   id: string;
 }
 
-interface CreateEntityProperties<Properties extends Record<keyof Properties, unknown>> {
+interface CreateEntityProperties<
+  Properties extends Record<keyof Properties, unknown>,
+> {
   id?: EntityProperties['id'];
   properties: Properties;
 }
 
-export abstract class Entity<Properties extends Record<keyof Properties, unknown>> {
+export abstract class Entity<
+  Properties extends Record<keyof Properties, unknown>,
+> {
   public readonly id: EntityProperties['id'];
   protected readonly _properties: Properties;
 

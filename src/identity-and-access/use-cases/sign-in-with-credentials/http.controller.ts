@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { SignInWithCredentialsHttpRequestBody } from './http.request.js';
 import { SignInWithCredentialsUseCase } from './use-case.js';
@@ -11,7 +18,10 @@ export class SignInWithCredentialsHttpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Public()
   @Post('/auth/sign-in')
-  async handle(@Body() body: SignInWithCredentialsHttpRequestBody, @Res() response: Response) {
+  async handle(
+    @Body() body: SignInWithCredentialsHttpRequestBody,
+    @Res() response: Response,
+  ) {
     const { accessToken } = await this.useCase.execute({
       email: body.email,
       password: body.password,

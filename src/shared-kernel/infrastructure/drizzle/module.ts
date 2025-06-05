@@ -16,6 +16,7 @@ import {
         const pool = new pg.Pool({
           connectionString: options.connectionString,
         });
+
         return drizzle(pool);
       },
       inject: [MODULE_OPTIONS_TOKEN],
@@ -24,7 +25,9 @@ import {
   exports: [DrizzlePostgresPoolToken],
 })
 export class DrizzleModule extends ConfigurableModuleClass {
-  constructor(@Inject(MODULE_OPTIONS_TOKEN) private options: DrizzleModuleOptions) {
+  constructor(
+    @Inject(MODULE_OPTIONS_TOKEN) private options: DrizzleModuleOptions,
+  ) {
     super();
   }
 }

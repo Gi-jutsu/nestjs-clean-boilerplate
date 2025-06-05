@@ -1,13 +1,13 @@
-import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
-import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
-import { DateTime, Settings } from "luxon";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ProcessOutboxMessagesUseCase } from "./use-case.js";
+import type { EventEmitter } from '@shared-kernel/domain/ports/event-emitter.port.js';
+import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
+import { DateTime, Settings } from 'luxon';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ProcessOutboxMessagesUseCase } from './use-case.js';
 
 class MockEventEmitter implements EventEmitter {
   emittedEvents: { event: string; values: any[] }[] = [];
   shouldThrowError = false;
-  errorMessage: string = "An error occurred";
+  errorMessage: string = 'An error occurred';
 
   async emitAsync(event: string, ...values: any[]) {
     if (this.shouldThrowError) {
@@ -22,7 +22,7 @@ class MockEventEmitter implements EventEmitter {
   }
 }
 
-describe("ProcessOutboxMessagesUseCase", () => {
+describe('ProcessOutboxMessagesUseCase', () => {
   beforeAll(() => {
     Settings.now = () => new Date(0).getMilliseconds();
   });
@@ -32,33 +32,33 @@ describe("ProcessOutboxMessagesUseCase", () => {
   });
 
   // @TODO: consider batching messages when reaching high number of messages per tick
-  it("should process all unprocessed messages", async () => {
+  it('should process all unprocessed messages', async () => {
     // Given
     const { allOutboxMessages, useCase } = createSystemUnderTest();
 
     const unprocessedMessageA = {
-      id: "1",
+      id: '1',
       errorMessage: null,
-      eventType: "event-a",
+      eventType: 'event-a',
       payload: {},
       processedAt: null,
     };
 
     const unprocessedMessageB = {
-      id: "2",
+      id: '2',
       errorMessage: null,
-      eventType: "event-b",
+      eventType: 'event-b',
       payload: {},
       processedAt: null,
     };
 
     allOutboxMessages.snapshots.set(
       unprocessedMessageA.id,
-      unprocessedMessageA
+      unprocessedMessageA,
     );
     allOutboxMessages.snapshots.set(
       unprocessedMessageB.id,
-      unprocessedMessageB
+      unprocessedMessageB,
     );
 
     // When
@@ -83,22 +83,22 @@ describe("ProcessOutboxMessagesUseCase", () => {
     ]);
   });
 
-  it("should emit an event when a message is processed", async () => {
+  it('should emit an event when a message is processed', async () => {
     // Given
     const { allOutboxMessages, mockedEventEmitter, useCase } =
       createSystemUnderTest();
 
     const unprocessedMessageC = {
-      id: "1",
+      id: '1',
       errorMessage: null,
-      eventType: "event-c",
+      eventType: 'event-c',
       payload: {},
       processedAt: null,
     };
 
     allOutboxMessages.snapshots.set(
       unprocessedMessageC.id,
-      unprocessedMessageC
+      unprocessedMessageC,
     );
 
     // When
@@ -107,29 +107,29 @@ describe("ProcessOutboxMessagesUseCase", () => {
     // Then
     expect(mockedEventEmitter.emittedEvents).toEqual([
       {
-        event: "event-c",
+        event: 'event-c',
         values: [unprocessedMessageC.payload],
       },
     ]);
   });
 
   // @TODO: consider retrying messages when an error occurs
-  it("should set an error message when an error occurs while emitting an event", async () => {
+  it('should set an error message when an error occurs while emitting an event', async () => {
     // Given
     const { allOutboxMessages, mockedEventEmitter, useCase } =
       createSystemUnderTest();
 
     const unprocessedMessageD = {
-      id: "1",
+      id: '1',
       errorMessage: null,
-      eventType: "event-d",
+      eventType: 'event-d',
       payload: {},
       processedAt: null,
     };
 
     allOutboxMessages.snapshots.set(
       unprocessedMessageD.id,
-      unprocessedMessageD
+      unprocessedMessageD,
     );
 
     mockedEventEmitter.shouldThrowError = true;
@@ -141,7 +141,7 @@ describe("ProcessOutboxMessagesUseCase", () => {
     expect([...allOutboxMessages.snapshots.values()]).toEqual([
       {
         id: unprocessedMessageD.id,
-        errorMessage: "An error occurred",
+        errorMessage: 'An error occurred',
         eventType: unprocessedMessageD.eventType,
         payload: unprocessedMessageD.payload,
         processedAt: DateTime.now().toJSDate(),
@@ -156,7 +156,7 @@ function createSystemUnderTest() {
 
   const useCase = new ProcessOutboxMessagesUseCase(
     allOutboxMessages,
-    mockedEventEmitter
+    mockedEventEmitter,
   );
 
   return { allOutboxMessages, mockedEventEmitter, useCase };

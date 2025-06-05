@@ -44,7 +44,8 @@ describe('ForgotPasswordUseCase', () => {
 
   it('should initiate the password reset process for an existing account', async () => {
     // Given
-    const { allAccounts, allForgotPasswordRequests, useCase } = createSystemUnderTest();
+    const { allAccounts, allForgotPasswordRequests, useCase } =
+      createSystemUnderTest();
 
     const account = {
       email: 'registered@call-me-dev.com',
@@ -72,7 +73,8 @@ describe('ForgotPasswordUseCase', () => {
 
   it('should refresh the token and expiration date when the password reset process has already been initiated', async () => {
     // Given
-    const { allAccounts, allForgotPasswordRequests, useCase } = createSystemUnderTest();
+    const { allAccounts, allForgotPasswordRequests, useCase } =
+      createSystemUnderTest();
 
     // @todo(dev-ux): impl Object Mother
     // @see https://martinfowler.com/bliki/ObjectMother.html
@@ -150,8 +152,12 @@ describe('ForgotPasswordUseCase', () => {
 
   it('should save a ForgotPasswordRequestRefreshedDomainEvent to the outbox upon refreshing a password reset request', async () => {
     // Given
-    const { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase } =
-      createSystemUnderTest();
+    const {
+      allAccounts,
+      allForgotPasswordRequests,
+      allOutboxMessages,
+      useCase,
+    } = createSystemUnderTest();
 
     const account = {
       email: 'dylan@call-me-dev.com',
@@ -194,14 +200,19 @@ describe('ForgotPasswordUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
-  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(allOutboxMessages);
+  const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
+    allOutboxMessages,
+  );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
   const allForgotPasswordRequests = new InMemoryForgotPasswordRequestRepository(
     outboxDomainEventPublisher,
   );
 
-  const useCase = new ForgotPasswordUseCase(allAccounts, allForgotPasswordRequests);
+  const useCase = new ForgotPasswordUseCase(
+    allAccounts,
+    allForgotPasswordRequests,
+  );
 
   return { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase };
 }

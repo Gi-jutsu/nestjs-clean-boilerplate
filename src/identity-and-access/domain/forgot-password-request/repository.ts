@@ -6,4 +6,6 @@ export interface ForgotPasswordRequestRepository {
   save: (request: ForgotPasswordRequest) => Promise<void>;
 }
 
-export const ForgotPasswordRequestRepositoryToken = Symbol('ForgotPasswordRequestRepository') as BrandedInjectionToken<ForgotPasswordRequestRepository>;
+export const ForgotPasswordRequestRepositoryToken = Symbol(
+  'ForgotPasswordRequestRepository',
+) as BrandedInjectionToken<ForgotPasswordRequestRepository>;
