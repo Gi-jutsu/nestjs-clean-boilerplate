@@ -9,7 +9,7 @@ export class SignInWithCredentialsUseCase {
     private readonly allAccounts: AccountRepository,
     private readonly jwt: JwtService,
     private readonly passwordHasher: PasswordHasher,
-  ) {}
+  ) { }
 
   async execute(command: SignInWithCredentialsCommand) {
     const account = await this.allAccounts.findByEmail(command.email);

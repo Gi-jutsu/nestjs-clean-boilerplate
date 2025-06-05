@@ -1,3 +1,4 @@
+import type { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
 import type { Account } from './aggregate-root.js';
 
 export interface AccountRepository {
@@ -6,4 +7,4 @@ export interface AccountRepository {
   save(account: Account): Promise<void>;
 }
 
-export const AccountRepositoryToken = Symbol('AccountRepository');
+export const AccountRepositoryToken = Symbol('AccountRepository') as BrandedInjectionToken<AccountRepository>;
