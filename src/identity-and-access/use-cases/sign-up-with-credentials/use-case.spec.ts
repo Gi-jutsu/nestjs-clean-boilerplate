@@ -1,11 +1,11 @@
-import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
 import { FakePasswordHasher } from '@identity-and-access/infrastructure/fake-password-hasher.js';
 import { InMemoryAccountRepository } from '@identity-and-access/infrastructure/repositories/in-memory-account.repository.js';
+import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
+import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
+import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import { DateTime, Settings } from 'luxon';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SignUpWithCredentialsUseCase } from './use-case.js';
-import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
-import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 
 describe('SignUpWithCredentialsUseCase', () => {
   beforeAll(() => {

@@ -2,11 +2,11 @@ import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
 import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-password-request/aggregate-root.js';
 import { InMemoryAccountRepository } from '@identity-and-access/infrastructure/repositories/in-memory-account.repository.js';
 import { InMemoryForgotPasswordRequestRepository } from '@identity-and-access/infrastructure/repositories/in-memory-forgot-password-request.repository.js';
+import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
 import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import { DateTime, Settings } from 'luxon';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ForgotPasswordUseCase } from './use-case.js';
-import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
 
 describe('ForgotPasswordUseCase', () => {
   beforeAll(() => {

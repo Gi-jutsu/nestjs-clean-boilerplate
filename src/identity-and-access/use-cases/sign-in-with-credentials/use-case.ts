@@ -1,7 +1,7 @@
-import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
 import type { JwtService } from '@identity-and-access/domain/ports/jwt-service.port.js';
 import type { PasswordHasher } from '@identity-and-access/domain/ports/password-hasher.port.js';
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import { WrongPasswordError } from './errors/wrong-password.error.js';
 
 export class SignInWithCredentialsUseCase {

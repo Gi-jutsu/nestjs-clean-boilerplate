@@ -1,3 +1,5 @@
+import { ConfigService } from '@nestjs/config';
+import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import {
   afterEach,
   beforeEach,
@@ -7,10 +9,8 @@ import {
   vi,
   vitest,
 } from 'vitest';
-import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
-import { ProcessOutboxMessagesUseCase } from './use-case.js';
 import { ProcessOutboxMessagesScheduler } from './scheduler.js';
-import { ConfigService } from '@nestjs/config';
+import { ProcessOutboxMessagesUseCase } from './use-case.js';
 
 const OUTBOX_PROCESSING_INTERVAL = 1000;
 

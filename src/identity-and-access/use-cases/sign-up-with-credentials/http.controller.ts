@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Public } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
 import { SignUpWithCredentialsHttpRequestBody } from './http.request.js';
 import { SignUpWithCredentialsUseCase } from './use-case.js';
-import { Public } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
 
 @Controller()
 export class SignUpWithCredentialsHttpController {

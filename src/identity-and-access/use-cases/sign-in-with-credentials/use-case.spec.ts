@@ -1,11 +1,11 @@
+import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
 import { FakePasswordHasher } from '@identity-and-access/infrastructure/fake-password-hasher.js';
 import { InMemoryAccountRepository } from '@identity-and-access/infrastructure/repositories/in-memory-account.repository.js';
-import { DateTime, Settings } from 'luxon';
-import { afterAll, beforeAll, describe, expect, it, vi, vitest } from 'vitest';
-import { SignInWithCredentialsUseCase } from './use-case.js';
-import { Account } from '@identity-and-access/domain/account/aggregate-root.js';
-import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
+import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
+import { DateTime, Settings } from 'luxon';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { SignInWithCredentialsUseCase } from './use-case.js';
 
 describe('SignInWithCredentialsUseCase', () => {
   beforeAll(() => {

@@ -1,8 +1,8 @@
+import type { ExecutionContext } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { AuthenticationGuard } from './authentication.guard.js';
-import type { Reflector } from '@nestjs/core';
-import type { ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
 
 describe('AuthenticationGuard', () => {
   describe('when the route is decorated with @Public', () => {

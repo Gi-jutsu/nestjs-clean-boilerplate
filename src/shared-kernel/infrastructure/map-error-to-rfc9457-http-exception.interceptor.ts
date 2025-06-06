@@ -1,5 +1,3 @@
-import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
-import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import {
   BadRequestException,
   CallHandler,
@@ -12,6 +10,8 @@ import {
   NestInterceptor,
   NotFoundException,
 } from '@nestjs/common';
+import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import { DateTime } from 'luxon';
 import { throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';

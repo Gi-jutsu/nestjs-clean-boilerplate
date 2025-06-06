@@ -1,7 +1,7 @@
-import { ConfigService } from '@nestjs/config';
 import { OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
-import { ProcessOutboxMessagesUseCase } from './use-case.js';
+import { ConfigService } from '@nestjs/config';
 import { EnvironmentKeys } from '@shared-kernel/environment.js';
+import { ProcessOutboxMessagesUseCase } from './use-case.js';
 
 export class ProcessOutboxMessagesScheduler
   implements OnApplicationBootstrap, OnApplicationShutdown

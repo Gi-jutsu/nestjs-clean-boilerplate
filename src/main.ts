@@ -1,10 +1,10 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { EnvironmentKeys } from '@shared-kernel/environment.js';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { fileURLToPath } from 'node:url';
-import { EnvironmentKeys } from '@shared-kernel/environment.js';
 import { ApplicationModule } from './application.module.js';
 
 export async function bootstrap() {

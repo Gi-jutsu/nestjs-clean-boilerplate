@@ -1,4 +1,8 @@
-import { PUBLIC_METADATA } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
+import {
+  type JwtService,
+  JwtServiceToken,
+} from '@identity-and-access/domain/ports/jwt-service.port.js';
+import type { CurrentAccount } from '@identity-and-access/infrastructure/decorators/get-current-account.decorator.js';
 import {
   CanActivate,
   ExecutionContext,
@@ -6,12 +10,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import {
-  type JwtService,
-  JwtServiceToken,
-} from '@identity-and-access/domain/ports/jwt-service.port.js';
+import { PUBLIC_METADATA } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
 import { z } from 'zod';
-import type { CurrentAccount } from '@identity-and-access/infrastructure/decorators/get-current-account.decorator.js';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {

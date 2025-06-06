@@ -1,8 +1,8 @@
-import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import type { Account } from '@identity-and-access/domain/account/aggregate-root.js';
 import type { AccountRepository } from '@identity-and-access/domain/account/repository.js';
 import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-password-request/aggregate-root.js';
 import type { ForgotPasswordRequestRepository } from '@identity-and-access/domain/forgot-password-request/repository.js';
+import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 
 export class ForgotPasswordUseCase {
   constructor(
