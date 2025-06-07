@@ -4,9 +4,12 @@ import type {
 } from '@core/types/index.js';
 import { InjectionToken, Provider } from '@nestjs/common';
 
+// Ensure we can still inject services like `ConfigService`
+type AllowedInjectionToken<T> = BrandedInjectionToken<T> | ClassConstructor<T>;
+
 type ExpectedTokensArray<C extends ClassConstructor> =
   ConstructorParameters<C> extends [...infer Params]
-    ? { [K in keyof Params]: Pick<BrandedInjectionToken<Params[K]>, '__brand'> }
+    ? { [K in keyof Params]: AllowedInjectionToken<Params[K]> }
     : [];
 
 /**

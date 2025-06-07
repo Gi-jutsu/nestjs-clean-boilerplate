@@ -88,23 +88,15 @@ const NodeJsProcessToken = Symbol(
     ]),
 
     // @TODO: It should be a controller
-    {
-      provide: ProcessOutboxMessagesScheduler,
-      useFactory: (
-        ...args: ConstructorParameters<typeof ProcessOutboxMessagesScheduler>
-      ) => new ProcessOutboxMessagesScheduler(...args),
-      inject: [ConfigService, ProcessOutboxMessagesUseCase],
-    },
+    createProvider(ProcessOutboxMessagesScheduler, [
+      ConfigService,
+      ProcessOutboxMessagesUseCase,
+    ]),
 
-    // @TODO: EventEmitter2 has no BrandedInjectionToken
-    // find a way to use createNestProvider(...)
-    {
-      provide: ProcessOutboxMessagesUseCase,
-      useFactory: (
-        ...args: ConstructorParameters<typeof ProcessOutboxMessagesUseCase>
-      ) => new ProcessOutboxMessagesUseCase(...args),
-      inject: [OutboxMessageRepositoryToken, EventEmitter2],
-    },
+    createProvider(ProcessOutboxMessagesUseCase, [
+      OutboxMessageRepositoryToken,
+      EventEmitter2,
+    ]),
 
     {
       provide: EventEmitterToken,

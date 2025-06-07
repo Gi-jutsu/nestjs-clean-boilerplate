@@ -1,6 +1,5 @@
 import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
 import { createProvider } from '@core/nestjs/utils/create-provider.js';
-import { BrandedInjectionToken } from '@core/types/branded-injection-token.js';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -86,7 +85,7 @@ import { SignUpWithCredentialsUseCase } from './use-cases/sign-up-with-credentia
     ]),
 
     createProvider(SendForgotPasswordEmailUseCase, [
-      ConfigService as unknown as BrandedInjectionToken<ConfigService>,
+      ConfigService,
       MailerToken,
     ]),
 

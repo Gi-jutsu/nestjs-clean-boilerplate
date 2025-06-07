@@ -15,6 +15,8 @@ class MockEventEmitter implements EventEmitter {
     }
 
     this.emittedEvents.push({ event, values });
+
+    return [];
   }
 
   clear() {
