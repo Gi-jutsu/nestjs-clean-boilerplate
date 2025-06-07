@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
+import type { BrandedInjectionToken } from '@core/types/branded-injection-token.js';
 import type { Account } from './aggregate-root.js';
 
 export interface AccountRepository {

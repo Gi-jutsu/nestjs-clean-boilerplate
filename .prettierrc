@@ -1,6 +1,5 @@
 {
   "arrowParens": "always",
-  "importOrder": ["^[a-z]", "^@", "^[./]"],
   "plugins": ["prettier-plugin-organize-imports"],
   "printWidth": 80,
   "singleQuote": true,

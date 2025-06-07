@@ -1,9 +1,8 @@
+import type {
+  BrandedInjectionToken,
+  ClassConstructor,
+} from '@core/types/index.js';
 import { InjectionToken, Provider } from '@nestjs/common';
-
-type Branded<T, Brand> = T & { __brand: Brand };
-
-export type BrandedInjectionToken<T> = Branded<symbol, T>;
-type ClassConstructor<T = any> = new (...args: any[]) => T;
 
 type ExpectedTokensArray<C extends ClassConstructor> =
   ConstructorParameters<C> extends [...infer Params]
@@ -35,7 +34,7 @@ type ExpectedTokensArray<C extends ClassConstructor> =
  * // ✅ Type-safe — if the token doesn't match the expected constructor type,
  * // you'll get a TypeScript error.
  */
-export function createNestProvider<
+export function createProvider<
   C extends ClassConstructor,
   Tokens extends ExpectedTokensArray<C>,
 >(useClass: C, inject: Tokens, provide?: InjectionToken): Provider {

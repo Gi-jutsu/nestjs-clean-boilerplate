@@ -5,13 +5,26 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "@identity-and-access/*": ["./src/identity-and-access/*"],
-      "@shared-kernel/*": ["./src/shared-kernel/*"]
+      "@core/*": [
+        "./src/core/*"
+      ],
+      "@identity-and-access/*": [
+        "./src/identity-and-access/*"
+      ],
+      "@shared-kernel/*": [
+        "./src/shared-kernel/*"
+      ]
     },
     "skipLibCheck": true,
     "strictNullChecks": true,
     "target": "ESNext"
   },
-  "include": ["specs/**/*.ts", "src/**/*.ts"],
-  "exclude": ["node_modules", "build"]
+  "include": [
+    "specs/**/*.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
 }

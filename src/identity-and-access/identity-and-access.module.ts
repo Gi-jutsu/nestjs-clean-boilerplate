@@ -1,13 +1,11 @@
+import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
+import { createProvider } from '@core/nestjs/utils/create-provider.js';
+import { BrandedInjectionToken } from '@core/types/branded-injection-token.js';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { DomainEventPublisherToken } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
 import { MailerToken } from '@shared-kernel/domain/ports/mailer.port.js';
-import { DrizzlePostgresPoolToken } from '@shared-kernel/infrastructure/drizzle/constants.js';
-import {
-  BrandedInjectionToken,
-  createNestProvider,
-} from '@shared-kernel/utils/create-nest-provider.js';
 import { AccountRepositoryToken } from './domain/account/repository.js';
 import { ForgotPasswordRequestRepositoryToken } from './domain/forgot-password-request/repository.js';
 import { JwtServiceToken } from './domain/ports/jwt-service.port.js';
@@ -46,13 +44,13 @@ import { SignUpWithCredentialsUseCase } from './use-cases/sign-up-with-credentia
     SendForgotPasswordEmailDomainEventController,
 
     /** Repositories */
-    createNestProvider(
+    createProvider(
       DrizzleAccountRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
       AccountRepositoryToken,
     ),
 
-    createNestProvider(
+    createProvider(
       DrizzleForgotPasswordRequestRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
       ForgotPasswordRequestRepositoryToken,
@@ -79,28 +77,26 @@ import { SignUpWithCredentialsUseCase } from './use-cases/sign-up-with-credentia
     },
 
     /** Query handlers */
-    createNestProvider(GetLoggedInAccountQueryHandler, [
-      DrizzlePostgresPoolToken,
-    ]),
+    createProvider(GetLoggedInAccountQueryHandler, [DrizzlePostgresPoolToken]),
 
     /** Use cases */
-    createNestProvider(ForgotPasswordUseCase, [
+    createProvider(ForgotPasswordUseCase, [
       AccountRepositoryToken,
       ForgotPasswordRequestRepositoryToken,
     ]),
 
-    createNestProvider(SendForgotPasswordEmailUseCase, [
+    createProvider(SendForgotPasswordEmailUseCase, [
       ConfigService as unknown as BrandedInjectionToken<ConfigService>,
       MailerToken,
     ]),
 
-    createNestProvider(SignInWithCredentialsUseCase, [
+    createProvider(SignInWithCredentialsUseCase, [
       AccountRepositoryToken,
       JwtServiceToken,
       PasswordHasherToken,
     ]),
 
-    createNestProvider(SignUpWithCredentialsUseCase, [
+    createProvider(SignUpWithCredentialsUseCase, [
       AccountRepositoryToken,
       PasswordHasherToken,
     ]),

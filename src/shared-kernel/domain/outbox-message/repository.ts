@@ -1,4 +1,4 @@
-import { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
+import type { BrandedInjectionToken } from '@core/types/index.js';
 import type { OutboxMessage } from './aggregate-root.js';
 
 export interface OutboxMessageRepository {

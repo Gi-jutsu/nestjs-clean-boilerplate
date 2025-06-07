@@ -1,3 +1,4 @@
+import { PUBLIC_METADATA } from '@core/nestjs/decorators/public.decorator.js';
 import {
   type JwtService,
   JwtServiceToken,
@@ -10,7 +11,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PUBLIC_METADATA } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
 import { z } from 'zod';
 
 @Injectable()

@@ -1,6 +1,6 @@
+import { EnvironmentKeys } from '@core/environment.js';
 import { OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EnvironmentKeys } from '@shared-kernel/environment.js';
 import { ProcessOutboxMessagesUseCase } from './use-case.js';
 
 export class ProcessOutboxMessagesScheduler

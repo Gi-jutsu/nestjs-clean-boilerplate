@@ -1,5 +1,5 @@
-import type { AggregateRoot } from '@shared-kernel/domain/primitives/aggregate-root.js';
-import type { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
+import { AggregateRoot } from '@core/primitives/aggregate-root.js';
+import type { BrandedInjectionToken } from '@core/types/index.js';
 
 export interface DomainEventPublisher {
   publish(entity: AggregateRoot<any>): Promise<void>;

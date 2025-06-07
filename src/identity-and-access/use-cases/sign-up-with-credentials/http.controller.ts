@@ -1,5 +1,5 @@
+import { Public } from '@core/nestjs/decorators/public.decorator.js';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { Public } from '@shared-kernel/infrastructure/decorators/public.decorator.js';
 import { SignUpWithCredentialsHttpRequestBody } from './http.request.js';
 import { SignUpWithCredentialsUseCase } from './use-case.js';
 

@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@shared-kernel/domain/primitives/aggregate-root.js';
+import { AggregateRoot } from '@core/primitives/aggregate-root.js';
 import { NewAccountRegisteredDomainEvent } from './events/new-account-registered.js';
 
 interface Properties {

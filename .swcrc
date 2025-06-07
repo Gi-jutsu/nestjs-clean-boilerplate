@@ -7,8 +7,15 @@
       "syntax": "typescript"
     },
     "paths": {
-      "@identity-and-access/*": ["./src/identity-and-access/*"],
-      "@shared-kernel/*": ["./src/shared-kernel/*"]
+      "@core/*": [
+        "./src/core/*"
+      ],
+      "@identity-and-access/*": [
+        "./src/identity-and-access/*"
+      ],
+      "@shared-kernel/*": [
+        "./src/shared-kernel/*"
+      ]
     },
     "target": "esnext",
     "transform": {

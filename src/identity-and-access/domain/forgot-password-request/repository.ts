@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
+import type { BrandedInjectionToken } from '@core/types/index.js';
 import type { ForgotPasswordRequest } from './aggregate-root.js';
 
 export interface ForgotPasswordRequestRepository {

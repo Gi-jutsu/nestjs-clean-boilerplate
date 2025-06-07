@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from '@shared-kernel/utils/create-nest-provider.js';
+import type { BrandedInjectionToken } from '@core/types/index.js';
 
 export interface JwtService {
   sign(payload: Record<string, unknown>): string;
