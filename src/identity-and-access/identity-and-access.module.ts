@@ -1,5 +1,5 @@
 import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
-import { createProvider } from '@core/nestjs/utils/create-provider.js';
+import { createNestProvider } from '@core/nestjs/utils/create-nest-provider.js';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -43,13 +43,13 @@ import { SignUpWithCredentialsUseCase } from './use-cases/sign-up-with-credentia
     SendForgotPasswordEmailDomainEventController,
 
     /** Repositories */
-    createProvider(
+    createNestProvider(
       DrizzleAccountRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
       AccountRepositoryToken,
     ),
 
-    createProvider(
+    createNestProvider(
       DrizzleForgotPasswordRequestRepository,
       [DrizzlePostgresPoolToken, DomainEventPublisherToken],
       ForgotPasswordRequestRepositoryToken,
@@ -76,26 +76,28 @@ import { SignUpWithCredentialsUseCase } from './use-cases/sign-up-with-credentia
     },
 
     /** Query handlers */
-    createProvider(GetLoggedInAccountQueryHandler, [DrizzlePostgresPoolToken]),
+    createNestProvider(GetLoggedInAccountQueryHandler, [
+      DrizzlePostgresPoolToken,
+    ]),
 
     /** Use cases */
-    createProvider(ForgotPasswordUseCase, [
+    createNestProvider(ForgotPasswordUseCase, [
       AccountRepositoryToken,
       ForgotPasswordRequestRepositoryToken,
     ]),
 
-    createProvider(SendForgotPasswordEmailUseCase, [
+    createNestProvider(SendForgotPasswordEmailUseCase, [
       ConfigService,
       MailerToken,
     ]),
 
-    createProvider(SignInWithCredentialsUseCase, [
+    createNestProvider(SignInWithCredentialsUseCase, [
       AccountRepositoryToken,
       JwtServiceToken,
       PasswordHasherToken,
     ]),
 
-    createProvider(SignUpWithCredentialsUseCase, [
+    createNestProvider(SignUpWithCredentialsUseCase, [
       AccountRepositoryToken,
       PasswordHasherToken,
     ]),

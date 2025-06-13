@@ -37,7 +37,7 @@ type ExpectedTokensArray<C extends ClassConstructor> =
  * // ✅ Type-safe — if the token doesn't match the expected constructor type,
  * // you'll get a TypeScript error.
  */
-export function createProvider<
+export function createNestProvider<
   C extends ClassConstructor,
   Tokens extends ExpectedTokensArray<C>,
 >(useClass: C, inject: Tokens, provide?: InjectionToken): Provider {

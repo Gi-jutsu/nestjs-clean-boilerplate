@@ -2,7 +2,7 @@ import { EnvironmentKeys, EnvironmentSchema } from '@core/environment.js';
 import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
 import { DrizzleModule } from '@core/nestjs/drizzle-module/module.js';
 import { CorrelationIdMiddleware } from '@core/nestjs/middlewares/correlation-id.middleware.js';
-import { createProvider } from '@core/nestjs/utils/create-provider.js';
+import { createNestProvider } from '@core/nestjs/utils/create-nest-provider.js';
 import { BrandedInjectionToken } from '@core/types/index.js';
 import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -70,30 +70,30 @@ const NodeJsProcessToken = Symbol(
       useValue: process,
     },
 
-    createProvider(
+    createNestProvider(
       OutboxDomainEventPublisher,
       [OutboxMessageRepositoryToken],
       DomainEventPublisherToken,
     ),
 
-    createProvider(
+    createNestProvider(
       DrizzleOutboxMessageRepository,
       [DrizzlePostgresPoolToken],
       OutboxMessageRepositoryToken,
     ),
 
-    createProvider(HealthCheckUseCase, [
+    createNestProvider(HealthCheckUseCase, [
       DrizzlePostgresPoolToken,
       NodeJsProcessToken,
     ]),
 
     // @TODO: It should be a controller
-    createProvider(ProcessOutboxMessagesScheduler, [
+    createNestProvider(ProcessOutboxMessagesScheduler, [
       ConfigService,
       ProcessOutboxMessagesUseCase,
     ]),
 
-    createProvider(ProcessOutboxMessagesUseCase, [
+    createNestProvider(ProcessOutboxMessagesUseCase, [
       OutboxMessageRepositoryToken,
       EventEmitter2,
     ]),
