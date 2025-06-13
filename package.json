@@ -3,9 +3,9 @@
   "scripts": {
     "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths",
     "build:watch": "pnpm build --watch",
-    "dev": "concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch\" \"tsc --noEmit --watch\"",
+    "dev": "concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch --source-maps\" \"tsc --noEmit --watch\"",
     "format": "prettier --write \"./src/**/*.{ts,js,json}\"",
-    "start": "node ./build/main.js",
+    "start": "node -r source-map-support/register ./build/main.js",
     "start:watch": "chokidar --silent \"./build/**/*.js\" \".env\" -c \"kill-port 8080 && pnpm start\"",
     "test": "pnpm test:unit --run && pnpm test:integration",
     "test:unit": "vitest",
@@ -56,7 +56,8 @@
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "source-map-support": "^0.5.21",
     "zod": "^3.25.51"
   },
-  "packageManager": "pnpm@10.11.1"
+  "packageManager": "pnpm@10.12.1"
 }
