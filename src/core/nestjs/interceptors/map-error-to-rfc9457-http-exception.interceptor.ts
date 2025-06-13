@@ -31,11 +31,12 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
       );
   }
 
-  private throwAsHttpException(error: unknown, correlationId: string) {
+  private throwAsHttpException(error: Error, correlationId: string) {
     const colorizedCorrelationId = `\x1b[90m(correlation_id: ${correlationId})\x1b[0m`;
     const colorizedError = `\x1b[31m${error}\x1b[0m`;
 
     this.logger.error(`${colorizedCorrelationId} ${colorizedError}`);
+    this.logger.verbose(`${colorizedCorrelationId} ${error.stack}`);
 
     // @TODO: Map ValidationErrors to RFC9457
     // for now, we are just returning the error as is
