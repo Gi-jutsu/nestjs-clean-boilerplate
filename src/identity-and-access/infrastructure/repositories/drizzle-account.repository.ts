@@ -40,14 +40,16 @@ export class DrizzleAccountRepository implements AccountRepository {
   async save(account: Account) {
     const snapshot = account.snapshot();
 
-    await this.database
-      .insert(accountSchema)
-      .values(snapshot)
-      .onConflictDoUpdate({
-        target: [accountSchema.id],
-        set: snapshot,
-      });
+    await this.database.transaction(async (tx) => {
+      await tx
+        .insert(accountSchema)
+        .values(snapshot)
+        .onConflictDoUpdate({
+          target: [accountSchema.id],
+          set: snapshot,
+        });
 
-    await this.domainEventPublisher.publish(account);
+      await this.domainEventPublisher.publish(account, tx);
+    });
   }
 }

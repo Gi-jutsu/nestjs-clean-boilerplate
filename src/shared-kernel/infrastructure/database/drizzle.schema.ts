@@ -1,9 +1,13 @@
-import { isNull } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { ExtractTablesWithRelations, isNull } from 'drizzle-orm';
+import {
+  NodePgDatabase,
+  NodePgQueryResultHKT,
+} from 'drizzle-orm/node-postgres';
 import {
   index,
   jsonb,
   pgTable,
+  PgTransaction,
   timestamp,
   uuid,
   varchar,
@@ -34,3 +38,9 @@ export const outboxMessageSchema = pgTable(
 export type SharedKernelDatabase = NodePgDatabase<{
   outboxMessages: typeof outboxMessageSchema;
 }>;
+
+export type DatabaseTransaction = PgTransaction<
+  NodePgQueryResultHKT,
+  any, // @TODO: Fix this type
+  ExtractTablesWithRelations<any> // @TODO: Fix this type
+>;

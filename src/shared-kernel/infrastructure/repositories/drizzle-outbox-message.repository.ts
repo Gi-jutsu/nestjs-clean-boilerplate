@@ -1,6 +1,7 @@
 import { OutboxMessage } from '@shared-kernel/domain/outbox-message/aggregate-root.js';
 import type { OutboxMessageRepository } from '@shared-kernel/domain/outbox-message/repository.js';
 import {
+  type DatabaseTransaction,
   outboxMessageSchema,
   type SharedKernelDatabase,
 } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
@@ -44,10 +45,11 @@ export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
     });
   }
 
-  async save(messages: OutboxMessage[]) {
+  async save(messages: OutboxMessage[], transaction?: DatabaseTransaction) {
     const snapshots = messages.map((message) => message.snapshot());
+    const tx = transaction ?? this.database;
 
-    await this.database
+    await tx
       .insert(outboxMessageSchema)
       .values(snapshots)
       .onConflictDoUpdate({
