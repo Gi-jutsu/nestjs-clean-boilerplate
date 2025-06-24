@@ -1,3 +1,5 @@
+import { Transaction } from '@nestjs-cls/transactional';
+import type { TransactionalAdapterDrizzleOrm } from '@nestjs-cls/transactional-adapter-drizzle-orm';
 import { isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -34,3 +36,7 @@ export const outboxMessageSchema = pgTable(
 export type SharedKernelDatabase = NodePgDatabase<{
   outboxMessages: typeof outboxMessageSchema;
 }>;
+
+export type SharedKernelDatabaseTransaction = Transaction<
+  TransactionalAdapterDrizzleOrm<SharedKernelDatabase>
+>;

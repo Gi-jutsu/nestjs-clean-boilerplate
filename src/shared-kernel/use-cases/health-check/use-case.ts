@@ -1,8 +1,8 @@
-import type { SharedKernelDatabase } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
+import type { SharedKernelDatabaseTransaction } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
 
 export class HealthCheckUseCase {
   constructor(
-    private readonly database: SharedKernelDatabase,
+    private readonly database: SharedKernelDatabaseTransaction,
     private readonly process: NodeJS.Process,
   ) {}
 

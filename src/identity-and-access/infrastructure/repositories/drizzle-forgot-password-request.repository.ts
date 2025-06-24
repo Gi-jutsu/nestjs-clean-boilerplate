@@ -2,7 +2,7 @@ import { ForgotPasswordRequest } from '@identity-and-access/domain/forgot-passwo
 import type { ForgotPasswordRequestRepository } from '@identity-and-access/domain/forgot-password-request/repository.js';
 import {
   ForgotPasswordRequestSchema,
-  type IdentityAndAccessDatabase,
+  type IdentityAndAccessDatabaseTransaction,
 } from '@identity-and-access/infrastructure/database/drizzle.schema.js';
 import type { DomainEventPublisher } from '@shared-kernel/domain/ports/domain-event-publisher.port.js';
 import { eq } from 'drizzle-orm';
@@ -12,7 +12,7 @@ export class DrizzleForgotPasswordRequestRepository
   implements ForgotPasswordRequestRepository
 {
   constructor(
-    private readonly database: IdentityAndAccessDatabase,
+    private readonly database: IdentityAndAccessDatabaseTransaction,
     private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 

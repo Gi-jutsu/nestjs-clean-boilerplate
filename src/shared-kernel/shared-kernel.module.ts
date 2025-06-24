@@ -1,14 +1,17 @@
 import { EnvironmentKeys, EnvironmentSchema } from '@core/environment.js';
-import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
-import { DrizzleModule } from '@core/nestjs/drizzle-module/module.js';
 import { CorrelationIdMiddleware } from '@core/nestjs/middlewares/correlation-id.middleware.js';
+import { DrizzlePostgresPoolToken } from '@core/nestjs/modules/drizzle/constants.js';
+import { DrizzleModule } from '@core/nestjs/modules/drizzle/module.js';
 import { createNestProvider } from '@core/nestjs/utils/create-nest-provider.js';
 import { BrandedInjectionToken } from '@core/types/index.js';
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterDrizzleOrm } from '@nestjs-cls/transactional-adapter-drizzle-orm';
 import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ClsModule } from 'nestjs-cls';
 import { HttpLoggerInterceptor } from '../core/nestjs/interceptors/http-logger.interceptor.js';
 import { MapErrorToRfc9457HttpException } from '../core/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js';
 import { OutboxMessageRepositoryToken } from './domain/outbox-message/repository.js';
@@ -33,23 +36,42 @@ const NodeJsProcessToken = Symbol(
 @Global()
 @Module({
   imports: [
+    // @see https://docs.nestjs.com/techniques/configuration
     ConfigModule.forRoot({
       isGlobal: true,
       validate: EnvironmentSchema.parse,
     }),
+
+    // @see ~/nestjs-clean-boilerplate/src/core/nestjs/modules/drizzle
     DrizzleModule.registerAsync({
+      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         connectionString: config.getOrThrow(EnvironmentKeys.DATABASE_URL),
       }),
     }),
+
+    // @see https://docs.nestjs.com/techniques/events
     EventEmitterModule.forRoot({ global: true }),
+
+    // @see https://docs.nestjs.com/security/rate-limiting
     ThrottlerModule.forRoot([
       {
         ttl: ONE_MINUTE_IN_MILLISECONDS,
         limit: MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE,
       },
     ]),
+
+    // @see https://papooch.github.io/nestjs-cls/plugins/available-plugins/transactional/drizzle-orm-adapter
+    ClsModule.forRoot({
+      plugins: [
+        new ClsPluginTransactional({
+          adapter: new TransactionalAdapterDrizzleOrm({
+            drizzleInstanceToken: DrizzlePostgresPoolToken,
+          }),
+        }),
+      ],
+    }),
   ],
   controllers: [HealthCheckHttpController],
   providers: [

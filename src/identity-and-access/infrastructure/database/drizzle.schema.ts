@@ -1,3 +1,5 @@
+import { Transaction } from '@nestjs-cls/transactional';
+import { TransactionalAdapterDrizzleOrm } from '@nestjs-cls/transactional-adapter-drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -55,3 +57,7 @@ export const ForgotPasswordRequestSchema = pgTable(
 export type IdentityAndAccessDatabase = NodePgDatabase<{
   accounts: typeof accountSchema;
 }>;
+
+export type IdentityAndAccessDatabaseTransaction = Transaction<
+  TransactionalAdapterDrizzleOrm<IdentityAndAccessDatabase>
+>;

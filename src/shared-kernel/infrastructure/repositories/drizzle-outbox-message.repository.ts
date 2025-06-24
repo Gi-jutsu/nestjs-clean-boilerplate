@@ -2,12 +2,12 @@ import { OutboxMessage } from '@shared-kernel/domain/outbox-message/aggregate-ro
 import type { OutboxMessageRepository } from '@shared-kernel/domain/outbox-message/repository.js';
 import {
   outboxMessageSchema,
-  type SharedKernelDatabase,
+  SharedKernelDatabaseTransaction,
 } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
 import { inArray, sql } from 'drizzle-orm';
 
 export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
-  constructor(private readonly database: SharedKernelDatabase) {}
+  constructor(private readonly database: SharedKernelDatabaseTransaction) {}
 
   async findUnprocessedMessages() {
     return await this.database.transaction(async (trx) => {
