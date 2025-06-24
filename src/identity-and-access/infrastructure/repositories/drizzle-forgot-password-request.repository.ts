@@ -43,14 +43,16 @@ export class DrizzleForgotPasswordRequestRepository
       expiresAt: request.properties.expiresAt.toJSDate(),
     };
 
-    await this.database
-      .insert(ForgotPasswordRequestSchema)
-      .values(snapshotWithJsDate)
-      .onConflictDoUpdate({
-        target: [ForgotPasswordRequestSchema.id],
-        set: snapshotWithJsDate,
-      });
+    await this.database.transaction(async (tx) => {
+      await tx
+        .insert(ForgotPasswordRequestSchema)
+        .values(snapshotWithJsDate)
+        .onConflictDoUpdate({
+          target: [ForgotPasswordRequestSchema.id],
+          set: snapshotWithJsDate,
+        });
 
-    await this.domainEventPublisher.publish(request);
+      await this.domainEventPublisher.publish(request, tx);
+    });
   }
 }
