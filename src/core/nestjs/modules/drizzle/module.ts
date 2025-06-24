@@ -1,4 +1,4 @@
-import { Inject, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import { DrizzlePostgresPoolToken } from './constants.js';
@@ -24,10 +24,4 @@ import {
   ],
   exports: [DrizzlePostgresPoolToken],
 })
-export class DrizzleModule extends ConfigurableModuleClass {
-  constructor(
-    @Inject(MODULE_OPTIONS_TOKEN) private options: DrizzleModuleOptions,
-  ) {
-    super();
-  }
-}
+export class DrizzleModule extends ConfigurableModuleClass {}

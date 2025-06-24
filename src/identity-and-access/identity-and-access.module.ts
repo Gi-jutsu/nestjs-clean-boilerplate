@@ -1,4 +1,4 @@
-import { DrizzlePostgresPoolToken } from '@core/nestjs/drizzle-module/constants.js';
+import { DrizzlePostgresPoolToken } from '@core/nestjs/modules/drizzle/constants.js';
 import { createNestProvider } from '@core/nestjs/utils/create-nest-provider.js';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

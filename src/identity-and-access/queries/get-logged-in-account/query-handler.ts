@@ -1,13 +1,15 @@
 import type { Account } from '@identity-and-access/domain/account/aggregate-root.js';
 import {
   accountSchema,
-  type IdentityAndAccessDatabase,
+  type IdentityAndAccessDatabaseTransaction,
 } from '@identity-and-access/infrastructure/database/drizzle.schema.js';
 import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
 import { eq } from 'drizzle-orm';
 
 export class GetLoggedInAccountQueryHandler {
-  constructor(private readonly database: IdentityAndAccessDatabase) {}
+  constructor(
+    private readonly database: IdentityAndAccessDatabaseTransaction,
+  ) {}
 
   async execute(query: GetLoggedInAccountQuery) {
     const [snapshot] = await this.database
