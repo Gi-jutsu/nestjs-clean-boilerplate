@@ -13,14 +13,13 @@ import { HttpLoggerInterceptor } from '../core/nestjs/interceptors/http-logger.i
 import { MapErrorToRfc9457HttpException } from '../core/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js';
 import { OutboxMessageRepositoryToken } from './domain/outbox-message/repository.js';
 import { DomainEventPublisherToken } from './domain/ports/domain-event-publisher.port.js';
-import { EventEmitterToken } from './domain/ports/event-emitter.port.js';
 import { MailerToken } from './domain/ports/mailer.port.js';
 import { ConsoleMailer } from './infrastructure/console-mailer.adapter.js';
 import { OutboxDomainEventPublisher } from './infrastructure/outbox-domain-event-publisher.adapter.js';
 import { DrizzleOutboxMessageRepository } from './infrastructure/repositories/drizzle-outbox-message.repository.js';
 import { HealthCheckHttpController } from './use-cases/health-check/http.controller.js';
 import { HealthCheckUseCase } from './use-cases/health-check/use-case.js';
-import { ProcessOutboxMessagesScheduler } from './use-cases/process-outbox-messages/scheduler.js';
+import { ProcessOutboxMessagesDomainEventController } from './use-cases/process-outbox-messages/domain-event.controller.js';
 import { ProcessOutboxMessagesUseCase } from './use-cases/process-outbox-messages/use-case.js';
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
@@ -65,14 +64,26 @@ const NodeJsProcessToken = Symbol(
       provide: APP_INTERCEPTOR,
       useClass: MapErrorToRfc9457HttpException,
     },
+
+    /** DomainEvent Controllers */
+    ProcessOutboxMessagesDomainEventController,
+
+    /** Infrastructure */
+
     {
       provide: NodeJsProcessToken,
       useValue: process,
     },
+    {
+      provide: MailerToken,
+      useClass: ConsoleMailer,
+    },
+
+    /** Use Cases */
 
     createNestProvider(
       OutboxDomainEventPublisher,
-      [OutboxMessageRepositoryToken],
+      [OutboxMessageRepositoryToken, EventEmitter2],
       DomainEventPublisherToken,
     ),
 
@@ -87,26 +98,10 @@ const NodeJsProcessToken = Symbol(
       NodeJsProcessToken,
     ]),
 
-    // @TODO: It should be a controller
-    createNestProvider(ProcessOutboxMessagesScheduler, [
-      ConfigService,
-      ProcessOutboxMessagesUseCase,
-    ]),
-
     createNestProvider(ProcessOutboxMessagesUseCase, [
       OutboxMessageRepositoryToken,
       EventEmitter2,
     ]),
-
-    {
-      provide: EventEmitterToken,
-      useValue: (await import('@nestjs/event-emitter')).EventEmitter2,
-    },
-
-    {
-      provide: MailerToken,
-      useClass: ConsoleMailer,
-    },
   ],
   exports: [
     DomainEventPublisherToken,
