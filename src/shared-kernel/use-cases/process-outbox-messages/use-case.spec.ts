@@ -9,18 +9,25 @@ class MockEventEmitter implements EventEmitter {
   shouldThrowError = false;
   errorMessage: string = 'An error occurred';
 
+  emit(event: string, ...values: any[]) {
+    this.addEmittedEventOrThrow(event, ...values);
+  }
+
   async emitAsync(event: string, ...values: any[]) {
-    if (this.shouldThrowError) {
-      throw new Error(this.errorMessage);
-    }
-
-    this.emittedEvents.push({ event, values });
-
+    this.addEmittedEventOrThrow(event, ...values);
     return [];
   }
 
   clear() {
     this.emittedEvents = [];
+  }
+
+  private addEmittedEventOrThrow(event: string, ...values: any[]) {
+    if (this.shouldThrowError) {
+      throw new Error(this.errorMessage);
+    }
+
+    this.emittedEvents.push({ event, values });
   }
 }
 

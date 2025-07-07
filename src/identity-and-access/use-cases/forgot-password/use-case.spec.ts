@@ -5,7 +5,7 @@ import { InMemoryForgotPasswordRequestRepository } from '@identity-and-access/in
 import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
 import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import { DateTime, Settings } from 'luxon';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ForgotPasswordUseCase } from './use-case.js';
 
 describe('ForgotPasswordUseCase', () => {
@@ -200,8 +200,15 @@ describe('ForgotPasswordUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
+
+  const noopEventEmitter = {
+    emit: vi.fn(),
+    emitAsync: vi.fn(),
+  };
+
   const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
     allOutboxMessages,
+    noopEventEmitter,
   );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
@@ -214,5 +221,11 @@ function createSystemUnderTest() {
     allForgotPasswordRequests,
   );
 
-  return { allAccounts, allForgotPasswordRequests, allOutboxMessages, useCase };
+  return {
+    allAccounts,
+    allForgotPasswordRequests,
+    allOutboxMessages,
+    noopEventEmitter,
+    useCase,
+  };
 }

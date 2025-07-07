@@ -7,11 +7,6 @@ export const shape = {
   API_HTTP_SCHEME: z.enum(['http', 'https']).default('http'),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.string(),
-  OUTBOX_PROCESSING_INTERVAL: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(60_000), // Default to 60 seconds in milliseconds
 
   // Add any additional environment variables here
   // e.g.:

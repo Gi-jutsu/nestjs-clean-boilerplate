@@ -94,8 +94,15 @@ describe('SignInWithCredentialsUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
+
+  const noopEventEmitter = {
+    emit: vi.fn(),
+    emitAsync: vi.fn(),
+  };
+
   const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
     allOutboxMessages,
+    noopEventEmitter,
   );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
@@ -113,6 +120,7 @@ function createSystemUnderTest() {
 
   return {
     allAccounts,
+    noopEventEmitter,
     jwt,
     passwordHasher,
     useCase,

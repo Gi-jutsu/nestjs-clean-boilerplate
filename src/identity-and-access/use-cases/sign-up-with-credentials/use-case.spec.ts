@@ -4,7 +4,7 @@ import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resourc
 import { OutboxDomainEventPublisher } from '@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js';
 import { InMemoryOutboxMessageRepository } from '@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js';
 import { DateTime, Settings } from 'luxon';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { SignUpWithCredentialsUseCase } from './use-case.js';
 
 describe('SignUpWithCredentialsUseCase', () => {
@@ -79,8 +79,15 @@ describe('SignUpWithCredentialsUseCase', () => {
 
 function createSystemUnderTest() {
   const allOutboxMessages = new InMemoryOutboxMessageRepository();
+
+  const noopEventEmitter = {
+    emit: vi.fn(),
+    emitAsync: vi.fn(),
+  };
+
   const outboxDomainEventPublisher = new OutboxDomainEventPublisher(
     allOutboxMessages,
+    noopEventEmitter,
   );
 
   const allAccounts = new InMemoryAccountRepository(outboxDomainEventPublisher);
@@ -91,5 +98,10 @@ function createSystemUnderTest() {
     fakePasswordHasher,
   );
 
-  return { allAccounts, fakePasswordHasher, useCase };
+  return {
+    allAccounts,
+    noopEventEmitter,
+    fakePasswordHasher,
+    useCase,
+  };
 }
