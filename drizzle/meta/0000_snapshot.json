@@ -1,11 +1,11 @@
 {
-  "id": "789d6efd-a62e-48c4-8c5b-db4529b99b88",
+  "id": "e8368b9d-933f-47de-a73c-c50b71a556e1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.accounts": {
-      "name": "accounts",
+    "public.outbox_messages": {
+      "name": "outbox_messages",
       "schema": "",
       "columns": {
         "id": {
@@ -14,51 +14,57 @@
           "primaryKey": true,
           "notNull": true
         },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
+        "event_type": {
+          "name": "event_type",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": true
         },
-        "is_email_verified": {
-          "name": "is_email_verified",
-          "type": "boolean",
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
-        "password": {
-          "name": "password",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
+        "occurred_at": {
+          "name": "occurred_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "processed_at": {
+          "name": "processed_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
-        "emailUniqueIndex": {
-          "name": "emailUniqueIndex",
+        "idx_outbox_messages_unprocessed": {
+          "name": "idx_outbox_messages_unprocessed",
           "columns": [
             {
-              "expression": "lower(\"email\")",
+              "expression": "occurred_at",
+              "isExpression": false,
               "asc": true,
-              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "processed_at",
+              "isExpression": false,
+              "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": true,
+          "isUnique": false,
+          "where": "\"outbox_messages\".\"processed_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -66,12 +72,18 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
   "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
