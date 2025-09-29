@@ -1,1 +1,1 @@
-export { Public } from '@thallesp/nestjs-better-auth';
+export { Public } from "@thallesp/nestjs-better-auth";

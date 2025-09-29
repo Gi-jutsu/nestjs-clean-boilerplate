@@ -1,14 +1,14 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import { fileURLToPath } from 'node:url';
-import { ApplicationModule } from './application.module.js';
-import { EnvironmentKeys } from './core/environment.js';
+import { fileURLToPath } from "node:url";
+import { Logger, ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { NestFactory } from "@nestjs/core";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { ApplicationModule } from "./application.module.js";
+import { EnvironmentKeys } from "./core/environment.js";
 
 export async function bootstrap() {
-  const logger = new Logger('bootstrap');
+  const logger = new Logger("bootstrap");
 
   const application = await NestFactory.create(ApplicationModule, {
     bodyParser: false, // Required for Better Auth | https://www.better-auth.com/docs/integrations/nestjs
@@ -31,8 +31,8 @@ export async function bootstrap() {
   );
 
   // Ensure uncaught exceptions do not crash the application
-  process.on('uncaughtException', (error) => {
-    logger.error('Uncaught Exception:', error);
+  process.on("uncaughtException", (error) => {
+    logger.error("Uncaught Exception:", error);
   });
 
   return application.getHttpServer();

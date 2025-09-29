@@ -1,6 +1,6 @@
-import type { BrandedInjectionToken } from '@core/types/index.js';
-import type { DatabaseTransaction } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
-import type { OutboxMessage } from './aggregate-root.js';
+import type { BrandedInjectionToken } from "@core/types/index.js";
+import type { DatabaseTransaction } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
+import type { OutboxMessage } from "./aggregate-root.js";
 
 export interface OutboxMessageRepository {
   findUnprocessedMessages(): Promise<OutboxMessage[]>;
@@ -11,5 +11,5 @@ export interface OutboxMessageRepository {
 }
 
 export const OutboxMessageRepositoryToken = Symbol(
-  'OutboxMessageRepository',
+  "OutboxMessageRepository",
 ) as BrandedInjectionToken<OutboxMessageRepository>;

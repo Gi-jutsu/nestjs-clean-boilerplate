@@ -9,12 +9,12 @@ import {
   Logger,
   NestInterceptor,
   NotFoundException,
-} from '@nestjs/common';
-import { ResourceAlreadyExistsError } from '@shared-kernel/domain/errors/resource-already-exists.error.js';
-import { ResourceNotFoundError } from '@shared-kernel/domain/errors/resource-not-found.error.js';
-import { DateTime } from 'luxon';
-import { throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+} from "@nestjs/common";
+import { ResourceAlreadyExistsError } from "@shared-kernel/domain/errors/resource-already-exists.error.js";
+import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not-found.error.js";
+import { DateTime } from "luxon";
+import { throwError } from "rxjs";
+import { catchError } from "rxjs/operators";
 
 @Injectable()
 export class MapErrorToRfc9457HttpException implements NestInterceptor {
@@ -22,7 +22,7 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler) {
     const request = context.switchToHttp().getRequest();
-    const correlationId = request.headers['x-correlation-id'] || 'N/A';
+    const correlationId = request.headers["x-correlation-id"] || "N/A";
 
     return next
       .handle()
@@ -56,11 +56,11 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
       () =>
         new HttpException(
           {
-            code: (error as any).code ?? 'internal-server-error',
-            detail: (error as any).detail ?? 'An unexpected error occurred.',
+            code: (error as any).code ?? "internal-server-error",
+            detail: (error as any).detail ?? "An unexpected error occurred.",
             status: (error as any).status ?? HttpStatus.INTERNAL_SERVER_ERROR,
             timestamp: (error as any).timestamp ?? DateTime.now().toISO(),
-            title: (error as any).title ?? 'Internal Server Error',
+            title: (error as any).title ?? "Internal Server Error",
           },
           (error as any).status ?? HttpStatus.INTERNAL_SERVER_ERROR,
         ),

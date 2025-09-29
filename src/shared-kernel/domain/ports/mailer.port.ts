@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from '@core/types/index.js';
+import type { BrandedInjectionToken } from "@core/types/index.js";
 
 export interface Mailer {
   sendEmailWithTemplate(
@@ -8,4 +8,4 @@ export interface Mailer {
   ): Promise<void>;
 }
 
-export const MailerToken = Symbol('Mailer') as BrandedInjectionToken<Mailer>;
+export const MailerToken = Symbol("Mailer") as BrandedInjectionToken<Mailer>;

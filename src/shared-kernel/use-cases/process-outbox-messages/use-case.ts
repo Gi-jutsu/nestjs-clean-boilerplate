@@ -1,5 +1,5 @@
-import type { OutboxMessageRepository } from '@shared-kernel/domain/outbox-message/repository.js';
-import type { EventEmitter } from '@shared-kernel/domain/ports/event-emitter.port.js';
+import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
+import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
 
 export class ProcessOutboxMessagesUseCase {
   constructor(

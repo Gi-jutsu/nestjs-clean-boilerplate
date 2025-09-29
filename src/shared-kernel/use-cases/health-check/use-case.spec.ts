@@ -1,15 +1,15 @@
-import { SharedKernelDatabase } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
-import { describe, expect, it, vitest } from 'vitest';
-import { HealthCheckUseCase } from './use-case.js';
+import { SharedKernelDatabase } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
+import { describe, expect, it, vitest } from "vitest";
+import { HealthCheckUseCase } from "./use-case.js";
 
 // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
-describe('HealthCheckUseCase', () => {
+describe("HealthCheckUseCase", () => {
   it.skip.each`
     isPostgresqlAvailable | status
-    ${true}               | ${'pass'}
-    ${false}              | ${'fail'}
+    ${true}               | ${"pass"}
+    ${false}              | ${"fail"}
   `(
-    'should return $status when PostgreSQL availability is $isPostgresqlAvailable',
+    "should return $status when PostgreSQL availability is $isPostgresqlAvailable",
     async ({ isPostgresqlAvailable, status }) => {
       // Given
       const { setPostgresAvailable, setPostgresUnavailable, useCase } =
@@ -22,7 +22,7 @@ describe('HealthCheckUseCase', () => {
 
       // Then
       expect(result).toMatchObject({
-        status: 'pass',
+        status: "pass",
         checks: {
           postgresql: {
             status,
@@ -32,7 +32,7 @@ describe('HealthCheckUseCase', () => {
     },
   );
 
-  it('should return the current uptime', async () => {
+  it("should return the current uptime", async () => {
     // Given
     const { getMockedUptime, useCase } = createSystemUnderTest();
 
@@ -41,14 +41,14 @@ describe('HealthCheckUseCase', () => {
 
     // Then
     expect(output).toMatchObject({
-      status: 'pass',
+      status: "pass",
       checks: {
         uptime: [
           {
-            componentType: 'system',
+            componentType: "system",
             observedValue: getMockedUptime(),
-            observedUnit: 's',
-            status: 'pass',
+            observedUnit: "s",
+            status: "pass",
           },
         ],
       },
@@ -56,7 +56,7 @@ describe('HealthCheckUseCase', () => {
   });
 });
 
-export function createSystemUnderTest() {
+function createSystemUnderTest() {
   const mockedDatabase = {
     execute: vitest.fn(),
   };
@@ -80,7 +80,7 @@ export function createSystemUnderTest() {
 
   const setPostgresUnavailable = () => {
     mockedDatabase.execute.mockRejectedValue(
-      new Error('PostgreSQL connection failed'),
+      new Error("PostgreSQL connection failed"),
     );
   };
 

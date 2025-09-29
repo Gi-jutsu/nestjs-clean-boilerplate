@@ -1,11 +1,11 @@
-import { OutboxMessage } from '@shared-kernel/domain/outbox-message/aggregate-root.js';
-import type { OutboxMessageRepository } from '@shared-kernel/domain/outbox-message/repository.js';
+import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
+import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
 import {
   type DatabaseTransaction,
   outboxMessageSchema,
   type SharedKernelDatabase,
-} from '@shared-kernel/infrastructure/database/drizzle.schema.js';
-import { inArray, sql } from 'drizzle-orm';
+} from "@shared-kernel/infrastructure/database/drizzle.schema.js";
+import { inArray, sql } from "drizzle-orm";
 
 export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
   constructor(private readonly database: SharedKernelDatabase) {}

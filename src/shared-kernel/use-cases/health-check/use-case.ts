@@ -1,4 +1,4 @@
-import type { SharedKernelDatabase } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
+import type { SharedKernelDatabase } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
 
 export class HealthCheckUseCase {
   constructor(
@@ -10,17 +10,17 @@ export class HealthCheckUseCase {
     const isPostgresqlAvailable = await this.isPostgresqlAvailable();
 
     return {
-      status: 'pass',
+      status: "pass",
       checks: {
         postgresql: {
-          status: isPostgresqlAvailable ? 'pass' : 'fail',
+          status: isPostgresqlAvailable ? "pass" : "fail",
         },
         uptime: [
           {
-            componentType: 'system',
+            componentType: "system",
             observedValue: this.process.uptime(),
-            observedUnit: 's',
-            status: 'pass',
+            observedUnit: "s",
+            status: "pass",
           },
         ],
       },
@@ -29,7 +29,7 @@ export class HealthCheckUseCase {
 
   private async isPostgresqlAvailable() {
     try {
-      await this.database.execute('SELECT 1');
+      await this.database.execute("SELECT 1");
       return true;
     } catch {
       return false;

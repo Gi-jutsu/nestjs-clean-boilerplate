@@ -1,5 +1,5 @@
-import { Logger } from '@nestjs/common';
-import { Mailer } from '@shared-kernel/domain/ports/mailer.port.js';
+import { Logger } from "@nestjs/common";
+import { Mailer } from "@shared-kernel/domain/ports/mailer.port.js";
 
 export class ConsoleMailer implements Mailer {
   private readonly logger = new Logger(ConsoleMailer.name);
