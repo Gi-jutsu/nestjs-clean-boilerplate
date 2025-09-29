@@ -1,9 +1,9 @@
-import { Server } from 'http';
-import supertest from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootstrap } from '../../../main.js';
+import { Server } from "http";
+import supertest from "supertest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { bootstrap } from "../../../main.js";
 
-describe('HealthCheckHttpController', () => {
+describe("HealthCheckHttpController", () => {
   let server: Server;
 
   beforeAll(async () => {
@@ -15,22 +15,22 @@ describe('HealthCheckHttpController', () => {
   });
 
   // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
-  it('should ...', async () => {
-    const response = await supertest(server).get('/health-check');
+  it("should ...", async () => {
+    const response = await supertest(server).get("/health-check");
 
     expect(response.status).toEqual(200);
     expect(response.body).toMatchObject({
-      status: 'pass',
+      status: "pass",
       checks: {
         postgresql: {
-          status: 'pass',
+          status: "pass",
         },
         uptime: [
           {
-            componentType: 'system',
+            componentType: "system",
             observedValue: expect.any(Number), // Uptime is dynamic, so we use expect.any(Number)
-            observedUnit: 's',
-            status: 'pass',
+            observedUnit: "s",
+            status: "pass",
           },
         ],
       },

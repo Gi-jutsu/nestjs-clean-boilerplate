@@ -1,5 +1,5 @@
-import type { BrandedInjectionToken } from '@core/types/index.js';
+import type { BrandedInjectionToken } from "@core/types/index.js";
 
 export const DrizzlePostgresPoolToken = Symbol(
-  'DrizzlePostgresPool',
+  "DrizzlePostgresPool",
 ) as BrandedInjectionToken<any>;

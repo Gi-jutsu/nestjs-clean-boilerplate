@@ -1,7 +1,0 @@
-{
-  "arrowParens": "always",
-  "plugins": ["prettier-plugin-organize-imports"],
-  "printWidth": 80,
-  "singleQuote": true,
-  "trailingComma": "all"
-}

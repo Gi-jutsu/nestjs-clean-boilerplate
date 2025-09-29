@@ -1,5 +1,5 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { Injectable, NestMiddleware } from "@nestjs/common";
+import type { Request, Response } from "express";
 
 @Injectable()
 export class CorrelationIdMiddleware implements NestMiddleware {
@@ -11,14 +11,14 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     const correlationId =
       this.extractCorrelationId(request) || this.generateCorrelationId();
 
-    request.headers['x-correlation-id'] = correlationId;
-    response.setHeader('x-correlation-id', correlationId);
+    request.headers["x-correlation-id"] = correlationId;
+    response.setHeader("x-correlation-id", correlationId);
 
     next();
   }
 
   private extractCorrelationId(request: Request): string | undefined {
-    return request.headers['x-correlation-id']?.toString();
+    return request.headers["x-correlation-id"]?.toString();
   }
 
   private generateCorrelationId(): string {

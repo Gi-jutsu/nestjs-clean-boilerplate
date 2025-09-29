@@ -1,6 +1,6 @@
-import { AggregateRoot } from '@core/primitives/aggregate-root.js';
-import type { BrandedInjectionToken } from '@core/types/index.js';
-import type { DatabaseTransaction } from '@shared-kernel/infrastructure/database/drizzle.schema.js';
+import { AggregateRoot } from "@core/primitives/aggregate-root.js";
+import type { BrandedInjectionToken } from "@core/types/index.js";
+import type { DatabaseTransaction } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
 
 export interface DomainEventPublisher {
   publish(
@@ -10,5 +10,5 @@ export interface DomainEventPublisher {
 }
 
 export const DomainEventPublisherToken = Symbol(
-  'DomainEventPublisher',
+  "DomainEventPublisher",
 ) as BrandedInjectionToken<DomainEventPublisher>;

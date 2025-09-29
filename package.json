@@ -4,7 +4,7 @@
     "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths",
     "build:watch": "pnpm build --watch",
     "dev": "dotenv -e .env -- concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch --source-maps\" \"tsc --noEmit --watch\"",
-    "format": "prettier --write \"./src/**/*.{ts,js,json}\"",
+    "format": "biome format --write ./src",
     "start": "node -r source-map-support/register ./build/main.js",
     "start:watch": "chokidar --silent \"./build/**/*.js\" \".env\" -c \"kill-port 8080 && pnpm start\"",
     "test": "pnpm test:unit --run && pnpm test:integration",
@@ -12,6 +12,7 @@
     "test:integration": "vitest run -c vitest.config.integration.ts"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.4",
     "@swc/cli": "^0.7.7",
     "@swc/core": "^1.11.31",
     "@testcontainers/postgresql": "^11.0.0",
@@ -29,8 +30,6 @@
     "dotenv-cli": "^10.0.0",
     "drizzle-kit": "^0.31.1",
     "kill-port": "^2.0.1",
-    "prettier": "3.5.3",
-    "prettier-plugin-organize-imports": "^4.1.0",
     "supertest": "^7.1.1",
     "testcontainers": "^11.0.0",
     "typescript": "^5.8.3",
