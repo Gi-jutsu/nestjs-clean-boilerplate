@@ -28,25 +28,39 @@ Welcome to the NestJS Boilerplate. This project provides a solid foundation for 
 > [!IMPORTANT]
 > To run the backend locally, you need a PostgreSQL database with migrations applied.
 
-### Bootstrap the PostgreSQL database
+### 1. Clone the project
 
-1. Start PostgreSQL using [docker-compose.yaml](/docker/docker-compose.yaml)
+```shell
+git clone git@github.com:Gi-jutsu/nestjs-clean-boilerplate.git
+cd nestjs-clean-boilerplate
+```
+
+### 2. Bootstrap the PostgreSQL database
+
+2.1. Start PostgreSQL using [docker-compose.yaml](/docker/docker-compose.yaml)
 
 ```shell
 docker compose -f docker/docker-compose.yaml up database -d
 ```
 
-2. Run the SQL migrations
+2.2. Run the SQL migrations
 
 ```shell
 pnpm drizzle-kit migrate
 ```
 
-### Start the API on Your Local Machine
+### 3. Start the API
 
+You can run the backend either **locally** or **with Docker**.
+
+#### Option A: Run locally (watch mode)
 ```shell
-# Run the backend in watch mode
 pnpm dev
+```
+
+#### Otpion B: Run with Docker
+```shell
+docker compose -f docker/docker-compose.yaml up api -d
 ```
 
 ## 🌟 Key Features
