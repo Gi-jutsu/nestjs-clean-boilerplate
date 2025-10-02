@@ -38,7 +38,7 @@
     "vitest": "^3.2.2"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.2",
+    "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.2",
     "@nestjs/event-emitter": "^3.0.1",
