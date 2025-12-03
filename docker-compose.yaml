@@ -1,16 +1,21 @@
-version: '3'
+version: "3"
 services:
-  api:
-    image: backend
+  nestjs-clean-boilerplate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nestjs-clean-boilerplate:latest
     env_file:
       - .env.docker
     ports:
-      - '8080:8080'
+      - "8080:8080"
+    depends_on:
+      - database
 
   database:
     image: postgres:alpine
     healthcheck:
-      test: ['CMD', 'pg_isready', '-q', '-U', 'admin', '-d', 'database']
+      test: ["CMD", "pg_isready", "-q", "-U", "admin", "-d", "database"]
       interval: 10s
       timeout: 60s
       retries: 3
@@ -19,7 +24,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: database
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data
 

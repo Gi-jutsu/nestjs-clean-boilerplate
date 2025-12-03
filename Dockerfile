@@ -1,4 +1,4 @@
-FROM node:lts-alpine as base
+FROM node:20-alpine as base
 
 RUN addgroup -S app_group && adduser -S app_user -G app_group
 
@@ -25,4 +25,4 @@ COPY --from=builder /opt/backend/build ./build
 
 USER app_user
 
-CMD ["node", "build/main.js"]
+CMD ["npm", "start"]
