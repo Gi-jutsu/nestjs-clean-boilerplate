@@ -22,7 +22,7 @@
   "include": [
     "specs/**/*.ts",
     "src/**/*.ts"
-  ],
+, "packages/api-gateway/application.integration.spec.ts", "packages/api-gateway/application.module.ts", "packages/api-gateway/main.ts"  ],
   "exclude": [
     "node_modules",
     "build"

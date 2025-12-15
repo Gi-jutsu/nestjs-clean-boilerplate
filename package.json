@@ -35,7 +35,8 @@
     "typescript": "^6.0.2",
     "unplugin-swc": "^1.5.9",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "nx": "22.2.3"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.18",
@@ -61,5 +62,6 @@
     "source-map-support": "^0.5.21",
     "zod": "^4.3.6"
   },
-  "packageManager": "pnpm@10.25.0"
+  "packageManager": "pnpm@10.25.0",
+  "nx": {}
 }
