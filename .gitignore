@@ -2,3 +2,8 @@
 build/
 coverage/
 node_modules/
+
+
+
+.nx/cache
+.nx/workspace-data
