@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/swcrc",
+  "$schema": "https://swc.rs/schema.json",
   "jsc": {
     "baseUrl": "./",
     "parser": {
@@ -7,15 +7,9 @@
       "syntax": "typescript"
     },
     "paths": {
-      "@core/*": [
-        "./src/core/*"
-      ],
-      "@identity-and-access/*": [
-        "./src/identity-and-access/*"
-      ],
-      "@shared-kernel/*": [
-        "./src/shared-kernel/*"
-      ]
+      "@core/*": ["./src/core/*"],
+      "@identity-and-access/*": ["./src/identity-and-access/*"],
+      "@shared-kernel/*": ["./src/shared-kernel/*"]
     },
     "target": "esnext",
     "transform": {
