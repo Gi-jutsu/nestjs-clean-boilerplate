@@ -1,0 +1,13 @@
+{
+  "name": "@workspace/identity-and-access",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./build/index.js"
+    }
+  },
+  "scripts": {
+    "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths"
+  }
+}

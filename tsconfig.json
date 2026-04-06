@@ -4,25 +4,15 @@
     "experimentalDecorators": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "paths": {
-      "@core/*": [
-        "./src/core/*"
-      ],
-      "@identity-and-access/*": [
-        "./src/identity-and-access/*"
-      ],
-      "@shared-kernel/*": [
-        "./src/shared-kernel/*"
-      ]
-    },
     "skipLibCheck": true,
     "strictNullChecks": true,
     "target": "ESNext"
   },
   "include": [
     "specs/**/*.ts",
-    "src/**/*.ts"
-, "apps/api-gateway/application.integration.spec.ts", "apps/api-gateway/application.module.ts", "apps/api-gateway/main.ts"  ],
+    "src/**/*.ts",
+    "packages/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "build"
