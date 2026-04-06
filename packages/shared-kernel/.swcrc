@@ -1,0 +1,18 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "jsc": {
+    "parser": {
+      "decorators": true,
+      "syntax": "typescript"
+    },
+    "target": "esnext",
+    "transform": {
+      "decoratorMetadata": true
+    },
+    "baseUrl": ".",
+    "paths": {
+      "@shared-kernel/*": ["./src/*"]
+    }
+  },
+  "minify": true
+}

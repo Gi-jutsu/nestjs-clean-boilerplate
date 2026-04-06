@@ -1,0 +1,16 @@
+{
+  "name": "@workspace/api-gateway",
+  "type": "module",
+  "scripts": {
+    "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths",
+    "build:watch": "pnpm build --watch",
+    "dev": "dotenv -e ../../.env -- concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch --source-maps\" \"tsc -p tsconfig.json --noEmit --watch\"",
+    "start": "node -r source-map-support/register ./build/main.js",
+    "start:watch": "chokidar --silent \"./build/**/*.js\" \"../../.env\" -c \"kill-port 8080 && pnpm start\""
+  },
+  "dependencies": {
+    "@workspace/identity-and-access": "workspace:*",
+    "@workspace/shared-kernel": "workspace:*",
+    "@nestjs/throttler": "^6.5.0"
+  }
+}

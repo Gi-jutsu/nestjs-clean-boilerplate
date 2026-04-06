@@ -1,12 +1,10 @@
 {
   "type": "module",
   "scripts": {
-    "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths",
-    "build:watch": "pnpm build --watch",
-    "dev": "dotenv -e .env -- concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch --source-maps\" \"tsc --noEmit --watch\"",
-    "format": "biome format --write ./src",
-    "start": "node -r source-map-support/register ./build/main.js",
-    "start:watch": "chokidar --silent \"./build/**/*.js\" \".env\" -c \"kill-port 8080 && pnpm start\"",
+    "dev": "pnpm --filter @workspace/api-gateway dev",
+    "build": "pnpm --filter @workspace/shared-kernel build && pnpm --filter @workspace/identity-and-access build && pnpm --filter @workspace/api-gateway build",
+    "start": "pnpm --filter @workspace/api-gateway start",
+    "format": "biome format --write ./apps ./packages",
     "test": "pnpm test:unit --run && pnpm test:integration",
     "test:unit": "vitest",
     "test:integration": "vitest run -c vitest.config.integration.ts"
@@ -30,6 +28,7 @@
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
     "kill-port": "^2.0.1",
+    "nx": "22.2.3",
     "supertest": "^7.2.2",
     "testcontainers": "^11.13.0",
     "typescript": "^6.0.2",
@@ -61,5 +60,6 @@
     "source-map-support": "^0.5.21",
     "zod": "^4.3.6"
   },
-  "packageManager": "pnpm@10.25.0"
+  "packageManager": "pnpm@10.33.0",
+  "nx": {}
 }
