@@ -4,59 +4,28 @@ import { HealthCheckUseCase } from "./use-case.js";
 
 // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
 describe("HealthCheckUseCase", () => {
-  it.skip.each`
-    isPostgresqlAvailable | status
-    ${true}               | ${"pass"}
-    ${false}              | ${"fail"}
-  `(
-    "should return $status when PostgreSQL availability is $isPostgresqlAvailable",
-    async ({ isPostgresqlAvailable, status }) => {
-      // Given
-      const { setPostgresAvailable, setPostgresUnavailable, useCase } =
-        createSystemUnderTest();
+  it("should report PostgreSQL as available", async () => {
+    const system = createSystemUnderTest();
 
-      if (isPostgresqlAvailable) {
-        setPostgresAvailable();
-      } else {
-        setPostgresUnavailable();
-      }
+    system.given.postgresqlIsAvailable();
+    await system.when.healthCheckIsPerformed();
+    system.then.healthCheckShouldReportPostgresqlStatus("pass");
+  });
 
-      // When
-      const result = await useCase.execute();
+  it("should report PostgreSQL as unavailable", async () => {
+    const system = createSystemUnderTest();
 
-      // Then
-      expect(result).toMatchObject({
-        status: "pass",
-        checks: {
-          postgresql: {
-            status,
-          },
-        },
-      });
-    },
-  );
+    system.given.postgresqlIsUnavailable();
+    await system.when.healthCheckIsPerformed();
+    system.then.healthCheckShouldReportPostgresqlStatus("fail");
+  });
 
   it("should return the current uptime", async () => {
-    // Given
-    const { getMockedUptime, useCase } = createSystemUnderTest();
+    const system = createSystemUnderTest();
 
-    // When
-    const output = await useCase.execute();
+    await system.when.healthCheckIsPerformed();
 
-    // Then
-    expect(output).toMatchObject({
-      status: "pass",
-      checks: {
-        uptime: [
-          {
-            componentType: "system",
-            observedValue: getMockedUptime(),
-            observedUnit: "s",
-            status: "pass",
-          },
-        ],
-      },
-    });
+    system.then.healthCheckShouldReportCurrentUptime();
   });
 });
 
@@ -74,24 +43,50 @@ function createSystemUnderTest() {
     mockedProcess as unknown as NodeJS.Process,
   );
 
-  const getMockedUptime = () => {
-    return mockedProcess.uptime();
-  };
-
-  const setPostgresAvailable = () => {
-    mockedDatabase.execute.mockResolvedValue([]);
-  };
-
-  const setPostgresUnavailable = () => {
-    mockedDatabase.execute.mockRejectedValue(
-      new Error("PostgreSQL connection failed"),
-    );
-  };
+  let output: Awaited<ReturnType<HealthCheckUseCase["execute"]>>;
 
   return {
-    useCase,
-    getMockedUptime,
-    setPostgresAvailable,
-    setPostgresUnavailable,
+    given: {
+      postgresqlIsAvailable() {
+        mockedDatabase.execute.mockResolvedValue([]);
+      },
+      postgresqlIsUnavailable() {
+        mockedDatabase.execute.mockRejectedValue(
+          new Error("PostgreSQL connection failed"),
+        );
+      },
+    },
+    when: {
+      async healthCheckIsPerformed() {
+        output = await useCase.execute();
+      },
+    },
+    then: {
+      healthCheckShouldReportPostgresqlStatus(status: "pass" | "fail") {
+        expect(output).toMatchObject({
+          status: "pass",
+          checks: {
+            postgresql: {
+              status,
+            },
+          },
+        });
+      },
+      healthCheckShouldReportCurrentUptime() {
+        expect(output).toMatchObject({
+          status: "pass",
+          checks: {
+            uptime: [
+              {
+                componentType: "system",
+                observedValue: mockedProcess.uptime(),
+                observedUnit: "s",
+                status: "pass",
+              },
+            ],
+          },
+        });
+      },
+    },
   };
 }
