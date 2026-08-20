@@ -9,5 +9,13 @@
     "coverage/**",
     "apps/**/build/**",
     "packages/**/build/**"
+  ],
+  "overrides": [
+    {
+      "files": ["*.spec.ts", "*.integration.spec.ts"],
+      "rules": {
+        "unicorn/no-thenable": "off"
+      }
+    }
   ]
 }

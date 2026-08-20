@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CallHandler,
   ConflictException,
   ExecutionContext,
@@ -15,6 +14,22 @@ import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not
 import { DateTime } from "luxon";
 import { throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
+
+type ErrorMapping = {
+  ErrorClass: abstract new (...args: any[]) => Error;
+  toHttpException: (error: Error) => HttpException;
+};
+
+const errorMappings: ErrorMapping[] = [
+  {
+    ErrorClass: ResourceNotFoundError,
+    toHttpException: (error) => new NotFoundException(error, { cause: error }),
+  },
+  {
+    ErrorClass: ResourceAlreadyExistsError,
+    toHttpException: (error) => new ConflictException(error, { cause: error }),
+  },
+];
 
 @Injectable()
 export class MapErrorToRfc9457HttpException implements NestInterceptor {
@@ -38,18 +53,14 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
     this.logger.error(`${colorizedCorrelationId} ${colorizedError}`);
     this.logger.verbose(`${colorizedCorrelationId} ${error.stack}`);
 
-    // @TODO: Map ValidationErrors to RFC9457
-    // for now, we are just returning the error as is
-    if (error instanceof BadRequestException) {
+    if (error instanceof HttpException) {
       return throwError(() => error);
     }
 
-    if (error instanceof ResourceNotFoundError) {
-      return throwError(() => new NotFoundException(error, { cause: error }));
-    }
+    const httpException = mapErrorToHttpException(error);
 
-    if (error instanceof ResourceAlreadyExistsError) {
-      return throwError(() => new ConflictException(error, { cause: error }));
+    if (httpException) {
+      return throwError(() => httpException);
     }
 
     return throwError(
@@ -66,4 +77,12 @@ export class MapErrorToRfc9457HttpException implements NestInterceptor {
         ),
     );
   }
+}
+
+function mapErrorToHttpException(error: Error) {
+  const mapping = errorMappings.find(
+    ({ ErrorClass }) => error instanceof ErrorClass,
+  );
+
+  return mapping?.toHttpException(error);
 }

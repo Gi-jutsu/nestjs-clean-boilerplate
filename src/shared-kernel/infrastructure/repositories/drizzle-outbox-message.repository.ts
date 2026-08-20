@@ -55,7 +55,8 @@ export class DrizzleOutboxMessageRepository implements OutboxMessageRepository {
       .onConflictDoUpdate({
         target: outboxMessageSchema.id,
         set: {
-          processedAt: sql`NOW()`,
+          errorMessage: sql`excluded.error_message`,
+          processedAt: sql`excluded.processed_at`,
         },
       });
   }

@@ -4,10 +4,18 @@ import { DateTime, Settings } from "luxon";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ProcessOutboxMessagesUseCase } from "./use-case.js";
 
+type OutboxMessageSnapshot = {
+  errorMessage: string | null;
+  eventType: string;
+  id: string;
+  payload: Record<string, unknown>;
+  processedAt: Date | null;
+};
+
 class MockEventEmitter implements EventEmitter {
   emittedEvents: { event: string; values: any[] }[] = [];
   shouldThrowError = false;
-  errorMessage: string = "An error occurred";
+  error: unknown = new Error("An error occurred");
 
   emit(event: string, ...values: any[]) {
     this.addEmittedEventOrThrow(event, ...values);
@@ -24,7 +32,7 @@ class MockEventEmitter implements EventEmitter {
 
   private addEmittedEventOrThrow(event: string, ...values: any[]) {
     if (this.shouldThrowError) {
-      throw new Error(this.errorMessage);
+      throw this.error;
     }
 
     this.emittedEvents.push({ event, values });
@@ -42,9 +50,7 @@ describe("ProcessOutboxMessagesUseCase", () => {
 
   // @TODO: consider batching messages when reaching high number of messages per tick
   it("should process all unprocessed messages", async () => {
-    // Given
-    const { allOutboxMessages, useCase } = createSystemUnderTest();
-
+    const system = createSystemUnderTest();
     const unprocessedMessageA = {
       id: "1",
       errorMessage: null,
@@ -61,20 +67,14 @@ describe("ProcessOutboxMessagesUseCase", () => {
       processedAt: null,
     };
 
-    allOutboxMessages.snapshots.set(
-      unprocessedMessageA.id,
+    system.given.unprocessedMessagesExist([
       unprocessedMessageA,
-    );
-    allOutboxMessages.snapshots.set(
-      unprocessedMessageB.id,
       unprocessedMessageB,
-    );
+    ]);
 
-    // When
-    await useCase.execute();
+    await system.when.outboxMessagesAreProcessed();
 
-    // Then
-    expect([...allOutboxMessages.snapshots.values()]).toEqual([
+    system.then.outboxMessagesShouldBeProcessed([
       {
         id: unprocessedMessageA.id,
         errorMessage: null,
@@ -93,10 +93,7 @@ describe("ProcessOutboxMessagesUseCase", () => {
   });
 
   it("should emit an event when a message is processed", async () => {
-    // Given
-    const { allOutboxMessages, mockedEventEmitter, useCase } =
-      createSystemUnderTest();
-
+    const system = createSystemUnderTest();
     const unprocessedMessageC = {
       id: "1",
       errorMessage: null,
@@ -105,16 +102,11 @@ describe("ProcessOutboxMessagesUseCase", () => {
       processedAt: null,
     };
 
-    allOutboxMessages.snapshots.set(
-      unprocessedMessageC.id,
-      unprocessedMessageC,
-    );
+    system.given.unprocessedMessagesExist([unprocessedMessageC]);
 
-    // When
-    await useCase.execute();
+    await system.when.outboxMessagesAreProcessed();
 
-    // Then
-    expect(mockedEventEmitter.emittedEvents).toEqual([
+    system.then.eventsShouldBeEmitted([
       {
         event: "event-c",
         values: [unprocessedMessageC.payload],
@@ -124,10 +116,7 @@ describe("ProcessOutboxMessagesUseCase", () => {
 
   // @TODO: consider retrying messages when an error occurs
   it("should set an error message when an error occurs while emitting an event", async () => {
-    // Given
-    const { allOutboxMessages, mockedEventEmitter, useCase } =
-      createSystemUnderTest();
-
+    const system = createSystemUnderTest();
     const unprocessedMessageD = {
       id: "1",
       errorMessage: null,
@@ -136,23 +125,43 @@ describe("ProcessOutboxMessagesUseCase", () => {
       processedAt: null,
     };
 
-    allOutboxMessages.snapshots.set(
-      unprocessedMessageD.id,
-      unprocessedMessageD,
-    );
+    system.given.unprocessedMessagesExist([unprocessedMessageD]);
+    system.given.messageProcessingFails();
 
-    mockedEventEmitter.shouldThrowError = true;
+    await system.when.outboxMessagesAreProcessed();
 
-    // When
-    await useCase.execute();
-
-    // Then
-    expect([...allOutboxMessages.snapshots.values()]).toEqual([
+    system.then.outboxMessagesShouldBeProcessed([
       {
         id: unprocessedMessageD.id,
         errorMessage: "An error occurred",
         eventType: unprocessedMessageD.eventType,
         payload: unprocessedMessageD.payload,
+        processedAt: DateTime.now().toJSDate(),
+      },
+    ]);
+  });
+
+  it("should keep the failure reason when processing fails without an error object", async () => {
+    const system = createSystemUnderTest();
+    const unprocessedMessage = {
+      id: "1",
+      errorMessage: null,
+      eventType: "event-e",
+      payload: {},
+      processedAt: null,
+    };
+
+    system.given.unprocessedMessagesExist([unprocessedMessage]);
+    system.given.messageProcessingFailsWith("Message processing failed");
+
+    await system.when.outboxMessagesAreProcessed();
+
+    system.then.outboxMessagesShouldBeProcessed([
+      {
+        id: unprocessedMessage.id,
+        errorMessage: "Message processing failed",
+        eventType: unprocessedMessage.eventType,
+        payload: unprocessedMessage.payload,
         processedAt: DateTime.now().toJSDate(),
       },
     ]);
@@ -168,5 +177,35 @@ function createSystemUnderTest() {
     mockedEventEmitter,
   );
 
-  return { allOutboxMessages, mockedEventEmitter, useCase };
+  return {
+    given: {
+      unprocessedMessagesExist(messages: OutboxMessageSnapshot[]) {
+        for (const message of messages) {
+          allOutboxMessages.snapshots.set(message.id, message);
+        }
+      },
+      messageProcessingFails() {
+        mockedEventEmitter.shouldThrowError = true;
+      },
+      messageProcessingFailsWith(error: unknown) {
+        mockedEventEmitter.shouldThrowError = true;
+        mockedEventEmitter.error = error;
+      },
+    },
+    when: {
+      async outboxMessagesAreProcessed() {
+        await useCase.execute();
+      },
+    },
+    then: {
+      outboxMessagesShouldBeProcessed(messages: OutboxMessageSnapshot[]) {
+        expect([...allOutboxMessages.snapshots.values()]).toEqual(messages);
+      },
+      eventsShouldBeEmitted(
+        events: { event: string; values: Record<string, unknown>[] }[],
+      ) {
+        expect(mockedEventEmitter.emittedEvents).toEqual(events);
+      },
+    },
+  };
 }
