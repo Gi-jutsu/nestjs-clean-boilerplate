@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "builder": {
+      "type": "swc",
+      "options": {
+        "ignore": ["**/*.spec.ts"]
+      }
+    },
+    "tsConfigPath": "tsconfig.build.json",
+    "typeCheck": true
+  }
+}
