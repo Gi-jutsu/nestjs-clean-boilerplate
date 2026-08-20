@@ -1,11 +1,11 @@
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import pg from 'pg';
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import pg from "pg";
 
 export async function bootstrapPostgresSqlContainer() {
   const postgreSqlContainer = await new PostgreSqlContainer(
-    'postgres:latest',
+    "postgres:latest",
   ).start();
   const postgreSqlClient = new pg.Client({
     connectionString: postgreSqlContainer.getConnectionUri(),
@@ -23,5 +23,5 @@ export async function bootstrapPostgresSqlContainer() {
 
 async function applySqlMigrations(pg: pg.Client) {
   const client = drizzle(pg);
-  await migrate(client, { migrationsFolder: './drizzle' });
+  await migrate(client, { migrationsFolder: "./drizzle" });
 }

@@ -1,9 +1,7 @@
 import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
 import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
 
-export class InMemoryOutboxMessageRepository
-  implements OutboxMessageRepository
-{
+export class InMemoryOutboxMessageRepository implements OutboxMessageRepository {
   readonly snapshots = new Map<
     OutboxMessage["id"],
     OutboxMessage["properties"]
