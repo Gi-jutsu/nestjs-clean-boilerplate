@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "node": true,
+    "vitest": true
+  },
+  "ignorePatterns": [
+    "build/**",
+    "coverage/**",
+    "apps/**/build/**",
+    "packages/**/build/**"
+  ]
+}

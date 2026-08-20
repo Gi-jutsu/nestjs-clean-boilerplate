@@ -4,7 +4,10 @@
     "build": "swc ./src --ignore **/*.spec.ts --out-dir ./build --strip-leading-paths",
     "build:watch": "pnpm build --watch",
     "dev": "dotenv -e .env -- concurrently --raw -n API,BUILD,TYPESCRIPT \"pnpm start:watch\" \"pnpm build:watch --source-maps\" \"tsc --noEmit --watch\"",
-    "format": "biome format --write ./src",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "start": "node -r source-map-support/register ./build/main.js",
     "start:watch": "chokidar --silent \"./build/**/*.js\" \".env\" -c \"kill-port 8080 && pnpm start\"",
     "test": "pnpm test:unit --run && pnpm test:integration",
@@ -12,7 +15,6 @@
     "test:integration": "vitest run -c vitest.config.integration.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.10",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.24",
     "@testcontainers/postgresql": "^11.13.0",
@@ -30,6 +32,8 @@
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
     "kill-port": "^2.0.1",
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.78.0",
     "supertest": "^7.2.2",
     "testcontainers": "^11.13.0",
     "typescript": "^6.0.2",

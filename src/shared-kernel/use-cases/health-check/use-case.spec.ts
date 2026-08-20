@@ -15,7 +15,11 @@ describe("HealthCheckUseCase", () => {
       const { setPostgresAvailable, setPostgresUnavailable, useCase } =
         createSystemUnderTest();
 
-      isPostgresqlAvailable ? setPostgresAvailable() : setPostgresUnavailable();
+      if (isPostgresqlAvailable) {
+        setPostgresAvailable();
+      } else {
+        setPostgresUnavailable();
+      }
 
       // When
       const result = await useCase.execute();

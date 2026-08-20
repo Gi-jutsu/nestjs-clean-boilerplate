@@ -29,7 +29,6 @@ export abstract class Entity<
     const { id, ...properties } = snapshot;
 
     // 'this' inside a static method correctly refers to the class (constructor function) that invoked it.
-    // biome-ignore lint:complexity/noThisInStatic
     return new this({ id, properties });
   }
 

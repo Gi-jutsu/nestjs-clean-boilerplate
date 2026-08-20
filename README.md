@@ -54,11 +54,13 @@ pnpm drizzle-kit migrate
 You can run the backend either **locally** or **with Docker**.
 
 #### Option A: Run locally (watch mode)
+
 ```shell
 pnpm dev
 ```
 
 #### Otpion B: Run with Docker
+
 ```shell
 docker compose -f docker/docker-compose.yaml up api -d
 ```
