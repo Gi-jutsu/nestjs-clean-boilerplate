@@ -29,7 +29,7 @@ export class HttpLoggerInterceptor implements NestInterceptor {
         const executionTime = Date.now() - start;
 
         this.logger.debug(
-          `[Response] (correlation_id: ${grayCorrelationId}) ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`,
+          `[Response] ${grayCorrelationId} ${request.method} ${request.url} ${response.statusCode} - ${executionTime}ms`,
         );
       }),
     );
