@@ -11,9 +11,9 @@
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node ./build/main.js",
-    "test": "pnpm test:unit --run && pnpm test:integration",
-    "test:unit": "vitest",
-    "test:integration": "vitest run -c vitest.config.integration.ts"
+    "test": "vitest run --coverage",
+    "test:unit": "vitest --project unit",
+    "test:integration": "vitest run --project integration"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.24",
