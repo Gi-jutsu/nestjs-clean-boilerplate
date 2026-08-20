@@ -17,7 +17,7 @@ export class ProcessOutboxMessagesUseCase {
         await this.eventEmitter.emitAsync(eventType, payload);
         message.process();
       } catch (error) {
-        message.fail(error.message);
+        message.fail(error instanceof Error ? error.message : String(error));
       }
 
       await this.allOutboxMessages.save([message]);
