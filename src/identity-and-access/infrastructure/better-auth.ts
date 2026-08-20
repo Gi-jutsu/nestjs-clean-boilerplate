@@ -4,9 +4,9 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./database/drizzle.schema.js";
 
-export function createBetterAuth() {
+export function createBetterAuth(databaseUrl: string) {
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
   });
 
   const client = drizzle(pool);
@@ -21,5 +21,3 @@ export function createBetterAuth() {
     }),
   });
 }
-
-export const auth = createBetterAuth();
