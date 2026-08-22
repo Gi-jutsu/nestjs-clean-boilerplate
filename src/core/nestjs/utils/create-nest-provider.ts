@@ -1,7 +1,5 @@
-import type {
-  BrandedInjectionToken,
-  ClassConstructor,
-} from "@core/types/index.js";
+import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
+import type { ClassConstructor } from "@core/types/class-constructor.js";
 import { InjectionToken, Provider } from "@nestjs/common";
 
 // Ensure we can still inject services like `ConfigService`

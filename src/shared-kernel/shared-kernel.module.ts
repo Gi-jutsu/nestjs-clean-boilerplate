@@ -3,12 +3,12 @@ import { DrizzlePostgresPoolToken } from "@core/nestjs/drizzle-module/constants.
 import { DrizzleModule } from "@core/nestjs/drizzle-module/module.js";
 import { CorrelationIdMiddleware } from "@core/nestjs/middlewares/correlation-id.middleware.js";
 import { createNestProvider } from "@core/nestjs/utils/create-nest-provider.js";
-import { BrandedInjectionToken } from "@core/types/index.js";
 import { Global, MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
 import { HttpLoggerInterceptor } from "../core/nestjs/interceptors/http-logger.interceptor.js";
 import { MapErrorToRfc9457HttpException } from "../core/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
 import { OutboxMessageRepositoryToken } from "./domain/outbox-message/repository.js";

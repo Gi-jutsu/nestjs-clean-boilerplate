@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from "@core/types/index.js";
+import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
 
 export interface Mailer {
   sendEmailWithTemplate(

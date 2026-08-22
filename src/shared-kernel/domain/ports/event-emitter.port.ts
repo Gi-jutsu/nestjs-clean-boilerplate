@@ -1,4 +1,4 @@
-import { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
+import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
 
 export interface EventEmitter {
   emit(event: string, ...values: any[]): void;
