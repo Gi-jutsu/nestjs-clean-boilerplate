@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
+import type { BrandedInjectionToken } from "@packages/nest-provider-factory";
 
 export interface EventEmitter {
   emit(event: string, ...values: any[]): void;

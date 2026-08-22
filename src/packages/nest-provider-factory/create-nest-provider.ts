@@ -1,6 +1,6 @@
-import type { BrandedInjectionToken } from "@core/types/branded-injection-token.js";
-import type { ClassConstructor } from "@core/types/class-constructor.js";
 import { InjectionToken, Provider } from "@nestjs/common";
+import type { BrandedInjectionToken } from "./branded-injection-token.js";
+import type { ClassConstructor } from "./class-constructor.js";
 
 // Ensure we can still inject services like `ConfigService`
 type AllowedInjectionToken<T> = BrandedInjectionToken<T> | ClassConstructor<T>;
