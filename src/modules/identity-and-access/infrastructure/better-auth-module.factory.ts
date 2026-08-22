@@ -1,12 +1,12 @@
-import { IdentityAndAccessEnvironmentKeys } from "@identity-and-access/environment.js";
 import { ConfigService } from "@nestjs/config";
+import { IdentityAndAccessEnvironmentKeys } from "@modules/identity-and-access/environment.js";
+import * as schema from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import { SharedKernelEnvironmentKeys } from "@shared-kernel/environment.js";
 import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "@identity-and-access/infrastructure/database/drizzle.schema.js";
 
 export function createBetterAuthModule() {
   return AuthModule.forRootAsync({

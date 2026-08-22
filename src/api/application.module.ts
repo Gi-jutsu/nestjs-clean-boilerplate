@@ -2,9 +2,9 @@ import { DrizzlePostgresPoolToken } from "@api/drizzle-module/constants.js";
 import { ApplicationEnvironmentSchema } from "@api/environment.js";
 import { HealthCheckHttpController } from "@api/use-cases/health-check/health-check.controller.js";
 import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
-import { IdentityAndAccessModule } from "@identity-and-access/identity-and-access.module.js";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
 import {
   createNestProvider,
   type BrandedInjectionToken,

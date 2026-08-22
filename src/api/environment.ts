@@ -1,4 +1,4 @@
-import { IdentityAndAccessEnvironmentVariablesShape } from "@identity-and-access/environment.js";
+import { IdentityAndAccessEnvironmentVariablesShape } from "@modules/identity-and-access/environment.js";
 import { createEnvironmentKeys } from "@packages/environment-keys/index.js";
 import { SharedKernelEnvironmentVariablesShape } from "@shared-kernel/environment.js";
 import { z, type ZodRawShape } from "zod";
