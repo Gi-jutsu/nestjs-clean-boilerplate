@@ -1,4 +1,4 @@
-import type { BrandedInjectionToken } from "@packages/nest-provider-factory";
+import type { BrandedInjectionToken } from "@packages/nest-provider-factory/index.js";
 import type { DatabaseTransaction } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
 import type { OutboxMessage } from "./aggregate-root.js";
 

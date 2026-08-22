@@ -3,8 +3,10 @@
   "jsc": {
     "baseUrl": "./",
     "paths": {
-      "@core/*": ["./src/core/*"],
+      "@api/*": ["./src/api/*"],
       "@identity-and-access/*": ["./src/identity-and-access/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@packages/*": ["./src/packages/*"],
       "@shared-kernel/*": ["./src/shared-kernel/*"]
     }
   },

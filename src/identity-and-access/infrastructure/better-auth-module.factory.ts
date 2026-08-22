@@ -1,5 +1,5 @@
-import { EnvironmentKeys } from "@core/environment.js";
 import { ConfigService } from "@nestjs/config";
+import { EnvironmentKeys } from "@shared-kernel/environment.js";
 import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

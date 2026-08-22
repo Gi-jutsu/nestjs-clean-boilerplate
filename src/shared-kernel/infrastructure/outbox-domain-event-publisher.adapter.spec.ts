@@ -1,4 +1,7 @@
-import { AggregateRoot, DomainEvent } from "@packages/domain-driven-design";
+import {
+  AggregateRoot,
+  DomainEvent,
+} from "@packages/domain-driven-design/index.js";
 import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
 import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
 import { describe, expect, it } from "vitest";

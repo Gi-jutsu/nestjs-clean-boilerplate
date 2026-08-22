@@ -1,3 +1,3 @@
-import { bootstrap } from "./bootstrap.js";
+import { bootstrap } from "@api/nestjs/bootstrap.js";
 
 void bootstrap();

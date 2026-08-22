@@ -1,5 +1,5 @@
-import { Public } from "@core/nestjs/decorators/public.decorator.js";
 import { Controller, Get } from "@nestjs/common";
+import { Public } from "@api/nestjs/decorators/public.decorator.js";
 import { HealthCheckUseCase } from "./use-case.js";
 
 @Controller()

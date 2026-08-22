@@ -1,4 +1,7 @@
-import { Entity, type DomainEvent } from "@packages/domain-driven-design";
+import {
+  Entity,
+  type DomainEvent,
+} from "@packages/domain-driven-design/index.js";
 import { DateTime } from "luxon";
 
 interface Properties {

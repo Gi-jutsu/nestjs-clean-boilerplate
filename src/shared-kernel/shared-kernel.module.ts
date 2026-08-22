@@ -1,7 +1,8 @@
-import { EnvironmentKeys } from "@core/environment.js";
-import { DrizzlePostgresPoolToken } from "@core/nestjs/drizzle-module/constants.js";
-import { DrizzleModule } from "@core/nestjs/drizzle-module/module.js";
-import { CorrelationIdMiddleware } from "@core/nestjs/middlewares/correlation-id.middleware.js";
+import { DrizzlePostgresPoolToken } from "@api/nestjs/drizzle-module/constants.js";
+import { DrizzleModule } from "@api/nestjs/drizzle-module/module.js";
+import { HttpLoggerInterceptor } from "@api/nestjs/interceptors/http-logger.interceptor.js";
+import { MapErrorToRfc9457HttpException } from "@api/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
+import { CorrelationIdMiddleware } from "@api/nestjs/middlewares/correlation-id.middleware.js";
 import { Global, MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
@@ -10,12 +11,11 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import {
   createNestProvider,
   type BrandedInjectionToken,
-} from "@packages/nest-provider-factory";
-import { HttpLoggerInterceptor } from "../core/nestjs/interceptors/http-logger.interceptor.js";
-import { MapErrorToRfc9457HttpException } from "../core/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
+} from "@packages/nest-provider-factory/index.js";
 import { OutboxMessageRepositoryToken } from "./domain/outbox-message/repository.js";
 import { DomainEventPublisherToken } from "./domain/ports/domain-event-publisher.port.js";
 import { MailerToken } from "./domain/ports/mailer.port.js";
+import { EnvironmentKeys } from "./environment.js";
 import { ConsoleMailer } from "./infrastructure/console-mailer.adapter.js";
 import { OutboxDomainEventPublisher } from "./infrastructure/outbox-domain-event-publisher.adapter.js";
 import { DrizzleOutboxMessageRepository } from "./infrastructure/repositories/drizzle-outbox-message.repository.js";
