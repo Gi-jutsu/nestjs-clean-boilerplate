@@ -8,8 +8,10 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import { ResourceAlreadyExistsError } from "@shared-kernel/domain/errors/resource-already-exists.error.js";
-import { ResourceNotFoundError } from "@shared-kernel/domain/errors/resource-not-found.error.js";
+import {
+  ResourceAlreadyExistsError,
+  ResourceNotFoundError,
+} from "@packages/domain-driven-design/index.js";
 import { DateTime, Settings } from "luxon";
 import { firstValueFrom, throwError } from "rxjs";
 import {
