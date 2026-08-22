@@ -1,8 +1,8 @@
-import type { DrizzlePostgresDatabase } from "@api/drizzle-module/schema.js";
+import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 
 export class HealthCheckUseCase {
   constructor(
-    private readonly database: DrizzlePostgresDatabase,
+    private readonly database: SharedKernelDatabase,
     private readonly process: NodeJS.Process,
   ) {}
 

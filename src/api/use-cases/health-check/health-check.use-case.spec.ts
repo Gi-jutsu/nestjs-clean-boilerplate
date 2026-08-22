@@ -1,5 +1,5 @@
 import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
-import { DrizzlePostgresDatabase } from "@api/drizzle-module/schema.js";
+import { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 import { describe, expect, it, vitest } from "vitest";
 
 // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
@@ -39,7 +39,7 @@ function createSystemUnderTest() {
   };
 
   const useCase = new HealthCheckUseCase(
-    mockedDatabase as unknown as DrizzlePostgresDatabase,
+    mockedDatabase as unknown as SharedKernelDatabase,
     mockedProcess as unknown as NodeJS.Process,
   );
 

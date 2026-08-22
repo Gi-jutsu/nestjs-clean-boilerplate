@@ -1,20 +1,27 @@
-import { DrizzlePostgresPoolToken } from "@api/drizzle-module/constants.js";
 import { ApplicationEnvironmentSchema } from "@api/environment.js";
+import { HttpLoggerInterceptor } from "@api/interceptors/http-logger.interceptor.js";
+import { MapErrorToRfc9457HttpException } from "@api/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
+import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
 import { HealthCheckHttpController } from "@api/use-cases/health-check/health-check.controller.js";
 import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
 import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
+import { DrizzlePostgresPoolToken } from "@modules/shared-kernel/infrastructure/database/drizzle-postgres-pool.token.js";
+import { SharedKernelModule } from "@modules/shared-kernel/shared-kernel.module.js";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import {
   createNestProvider,
   type BrandedInjectionToken,
 } from "@packages/nest-provider-factory/index.js";
-import { OutboxModule } from "@packages/outbox/index.js";
-import { SharedKernelModule } from "@shared-kernel/shared-kernel.module.js";
 
 const NodeJsProcessToken = Symbol(
   "Process",
 ) as BrandedInjectionToken<NodeJS.Process>;
+
+const ONE_MINUTE_IN_MILLISECONDS = 60_000;
+const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
 
 @Module({
   imports: [
@@ -22,11 +29,14 @@ const NodeJsProcessToken = Symbol(
       isGlobal: true,
       validate: ApplicationEnvironmentSchema.parse,
     }),
-    IdentityAndAccessModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: ONE_MINUTE_IN_MILLISECONDS,
+        limit: MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE,
+      },
+    ]),
     SharedKernelModule,
-    OutboxModule.register({
-      databaseToken: DrizzlePostgresPoolToken,
-    }),
+    IdentityAndAccessModule,
   ],
   controllers: [HealthCheckHttpController],
   providers: [
@@ -34,10 +44,26 @@ const NodeJsProcessToken = Symbol(
       provide: NodeJsProcessToken,
       useValue: process,
     },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpLoggerInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MapErrorToRfc9457HttpException,
+    },
     createNestProvider(HealthCheckUseCase, [
       DrizzlePostgresPoolToken,
       NodeJsProcessToken,
     ]),
   ],
 })
-export class ApplicationModule {}
+export class ApplicationModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes("*");
+  }
+}

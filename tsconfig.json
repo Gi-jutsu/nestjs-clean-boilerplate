@@ -7,8 +7,7 @@
     "paths": {
       "@api/*": ["./src/api/*"],
       "@modules/*": ["./src/modules/*"],
-      "@packages/*": ["./src/packages/*"],
-      "@shared-kernel/*": ["./src/shared-kernel/*"]
+      "@packages/*": ["./src/packages/*"]
     },
     "skipLibCheck": true,
     "strictNullChecks": true,

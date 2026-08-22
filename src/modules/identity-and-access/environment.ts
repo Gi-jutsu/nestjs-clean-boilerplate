@@ -1,4 +1,4 @@
-import { createEnvironmentKeys } from "@packages/environment-keys/index.js";
+import { createEnvironmentKeys } from "@modules/shared-kernel/environment-keys.js";
 import { z, type ZodRawShape } from "zod";
 
 export const IdentityAndAccessEnvironmentVariablesShape = {
