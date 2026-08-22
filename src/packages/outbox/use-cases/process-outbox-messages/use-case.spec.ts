@@ -1,8 +1,8 @@
-import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
-import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
+import type { EventEmitter } from "@packages/outbox/domain/ports/event-emitter.port.js";
+import { InMemoryOutboxMessageRepository } from "@packages/outbox/infrastructure/repositories/in-memory-outbox-message.repository.js";
+import { ProcessOutboxMessagesUseCase } from "@packages/outbox/use-cases/process-outbox-messages/use-case.js";
 import { DateTime, Settings } from "luxon";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ProcessOutboxMessagesUseCase } from "./use-case.js";
 
 type OutboxMessageSnapshot = {
   errorMessage: string | null;

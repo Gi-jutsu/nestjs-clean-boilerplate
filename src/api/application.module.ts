@@ -9,6 +9,7 @@ import {
   createNestProvider,
   type BrandedInjectionToken,
 } from "@packages/nest-provider-factory/index.js";
+import { OutboxModule } from "@packages/outbox/index.js";
 import { SharedKernelModule } from "@shared-kernel/shared-kernel.module.js";
 
 const NodeJsProcessToken = Symbol(
@@ -23,6 +24,9 @@ const NodeJsProcessToken = Symbol(
     }),
     IdentityAndAccessModule,
     SharedKernelModule,
+    OutboxModule.register({
+      databaseToken: DrizzlePostgresPoolToken,
+    }),
   ],
   controllers: [HealthCheckHttpController],
   providers: [

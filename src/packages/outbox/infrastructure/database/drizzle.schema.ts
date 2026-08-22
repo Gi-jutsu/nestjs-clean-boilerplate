@@ -35,7 +35,7 @@ export const outboxMessageSchema = pgTable(
   ],
 );
 
-export type SharedKernelDatabase = NodePgDatabase<{
+export type OutboxDatabase = NodePgDatabase<{
   outboxMessages: typeof outboxMessageSchema;
 }>;
 

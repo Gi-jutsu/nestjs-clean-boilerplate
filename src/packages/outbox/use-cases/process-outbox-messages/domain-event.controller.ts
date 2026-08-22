@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { OnEvent } from "@nestjs/event-emitter";
-import { OutboxMessagesQueuedDomainEvent } from "@shared-kernel/domain/outbox-message/events/outbox-messages-queued.domain-event.js";
-import { ProcessOutboxMessagesUseCase } from "./use-case.js";
+import { OutboxMessagesQueuedDomainEvent } from "@packages/outbox/domain/outbox-messages-queued.domain-event.js";
+import { ProcessOutboxMessagesUseCase } from "@packages/outbox/use-cases/process-outbox-messages/use-case.js";
 
 @Injectable()
 export class ProcessOutboxMessagesDomainEventController {

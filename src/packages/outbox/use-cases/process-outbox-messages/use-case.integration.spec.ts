@@ -1,14 +1,14 @@
-import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
+import type { EventEmitter } from "@packages/outbox/domain/ports/event-emitter.port.js";
 import {
   outboxMessageSchema,
-  type SharedKernelDatabase,
-} from "@shared-kernel/infrastructure/database/drizzle.schema.js";
-import { DrizzleOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/drizzle-outbox-message.repository.js";
+  type OutboxDatabase,
+} from "@packages/outbox/infrastructure/database/drizzle.schema.js";
+import { DrizzleOutboxMessageRepository } from "@packages/outbox/infrastructure/repositories/drizzle-outbox-message.repository.js";
+import { ProcessOutboxMessagesUseCase } from "@packages/outbox/use-cases/process-outbox-messages/use-case.js";
 import { asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { ProcessOutboxMessagesUseCase } from "./use-case.js";
 
 type OutboxMessageSnapshot = {
   errorMessage: string | null;
@@ -23,7 +23,7 @@ type PendingMessage = Pick<
   "eventType" | "id" | "payload"
 >;
 type SystemState = {
-  database: SharedKernelDatabase;
+  database: OutboxDatabase;
   eventEmitter: RecordingEventEmitter;
   pendingMessage?: PendingMessage;
   useCase: ProcessOutboxMessagesUseCase;
@@ -56,7 +56,7 @@ class RecordingEventEmitter implements EventEmitter {
 }
 
 describe("ProcessOutboxMessagesUseCase integration", () => {
-  let database: SharedKernelDatabase;
+  let database: OutboxDatabase;
   let pool: pg.Pool;
 
   beforeAll(() => {
@@ -64,7 +64,7 @@ describe("ProcessOutboxMessagesUseCase integration", () => {
       connectionString: process.env.DATABASE_URL,
     });
 
-    database = drizzle(pool) as SharedKernelDatabase;
+    database = drizzle(pool) as OutboxDatabase;
   });
 
   beforeEach(async () => {
@@ -100,7 +100,7 @@ describe("ProcessOutboxMessagesUseCase integration", () => {
   });
 });
 
-function createSystemUnderTest(database: SharedKernelDatabase) {
+function createSystemUnderTest(database: OutboxDatabase) {
   const eventEmitter = new RecordingEventEmitter();
   const useCase = new ProcessOutboxMessagesUseCase(
     new DrizzleOutboxMessageRepository(database),
@@ -197,7 +197,7 @@ function getPendingMessage(state: SystemState) {
   return state.pendingMessage;
 }
 
-async function selectOutboxMessages(database: SharedKernelDatabase) {
+async function selectOutboxMessages(database: OutboxDatabase) {
   return await database
     .select({
       errorMessage: outboxMessageSchema.errorMessage,

@@ -2,11 +2,11 @@ import {
   AggregateRoot,
   DomainEvent,
 } from "@packages/domain-driven-design/index.js";
-import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
-import { InMemoryOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/in-memory-outbox-message.repository.js";
+import type { EventEmitter } from "@packages/outbox/domain/ports/event-emitter.port.js";
+import { OutboxMessagesQueuedDomainEvent } from "@packages/outbox/domain/outbox-messages-queued.domain-event.js";
+import { OutboxDomainEventPublisher } from "@packages/outbox/infrastructure/outbox-domain-event-publisher.adapter.js";
+import { InMemoryOutboxMessageRepository } from "@packages/outbox/infrastructure/repositories/in-memory-outbox-message.repository.js";
 import { describe, expect, it } from "vitest";
-import { OutboxMessagesQueuedDomainEvent } from "../domain/outbox-message/events/outbox-messages-queued.domain-event.js";
-import { OutboxDomainEventPublisher } from "./outbox-domain-event-publisher.adapter.js";
 
 class AccountOpenedDomainEvent extends DomainEvent<{ accountId: string }> {}
 

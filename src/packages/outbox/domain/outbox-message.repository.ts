@@ -1,6 +1,6 @@
 import type { BrandedInjectionToken } from "@packages/nest-provider-factory/index.js";
-import type { DatabaseTransaction } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
-import type { OutboxMessage } from "./aggregate-root.js";
+import type { OutboxMessage } from "@packages/outbox/domain/outbox-message.js";
+import type { DatabaseTransaction } from "@packages/outbox/infrastructure/database/drizzle.schema.js";
 
 export interface OutboxMessageRepository {
   findUnprocessedMessages(): Promise<OutboxMessage[]>;

@@ -1,10 +1,10 @@
 import { AggregateRoot } from "@packages/domain-driven-design/index.js";
-import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
-import { OutboxMessagesQueuedDomainEvent } from "@shared-kernel/domain/outbox-message/events/outbox-messages-queued.domain-event.js";
-import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
-import type { DomainEventPublisher } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
-import type { EventEmitter } from "@shared-kernel/domain/ports/event-emitter.port.js";
-import type { DatabaseTransaction } from "./database/drizzle.schema.js";
+import { OutboxMessage } from "@packages/outbox/domain/outbox-message.js";
+import { OutboxMessagesQueuedDomainEvent } from "@packages/outbox/domain/outbox-messages-queued.domain-event.js";
+import type { OutboxMessageRepository } from "@packages/outbox/domain/outbox-message.repository.js";
+import type { DomainEventPublisher } from "@packages/outbox/domain/ports/domain-event-publisher.port.js";
+import type { EventEmitter } from "@packages/outbox/domain/ports/event-emitter.port.js";
+import type { DatabaseTransaction } from "@packages/outbox/infrastructure/database/drizzle.schema.js";
 
 export class OutboxDomainEventPublisher implements DomainEventPublisher {
   constructor(

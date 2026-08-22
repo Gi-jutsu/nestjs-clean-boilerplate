@@ -1,6 +1,6 @@
 import { describe, expect, it, vitest } from "vitest";
-import { ProcessOutboxMessagesDomainEventController } from "./domain-event.controller.js";
-import type { ProcessOutboxMessagesUseCase } from "./use-case.js";
+import { ProcessOutboxMessagesDomainEventController } from "@packages/outbox/use-cases/process-outbox-messages/domain-event.controller.js";
+import type { ProcessOutboxMessagesUseCase } from "@packages/outbox/use-cases/process-outbox-messages/use-case.js";
 
 describe("ProcessOutboxMessagesDomainEventController", () => {
   it("should process queued outbox messages", async () => {
