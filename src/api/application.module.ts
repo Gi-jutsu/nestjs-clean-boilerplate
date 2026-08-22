@@ -2,23 +2,13 @@ import { ApplicationEnvironmentSchema } from "@api/environment.js";
 import { HttpLoggerInterceptor } from "@api/interceptors/http-logger.interceptor.js";
 import { MapErrorToRfc9457HttpException } from "@api/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
 import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
-import { HealthCheckHttpController } from "@api/use-cases/health-check/health-check.controller.js";
-import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
 import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
-import { DrizzlePostgresPoolToken } from "@modules/shared-kernel/infrastructure/database/drizzle-postgres-pool.token.js";
 import { SharedKernelModule } from "@modules/shared-kernel/shared-kernel.module.js";
+import { HealthCheckHttpController } from "@modules/shared-kernel/use-cases/health-check/health-check.controller.js";
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import {
-  createNestProvider,
-  type BrandedInjectionToken,
-} from "@packages/nest-provider-factory/index.js";
-
-const NodeJsProcessToken = Symbol(
-  "Process",
-) as BrandedInjectionToken<NodeJS.Process>;
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -41,10 +31,6 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
   controllers: [HealthCheckHttpController],
   providers: [
     {
-      provide: NodeJsProcessToken,
-      useValue: process,
-    },
-    {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
@@ -56,10 +42,6 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       provide: APP_INTERCEPTOR,
       useClass: MapErrorToRfc9457HttpException,
     },
-    createNestProvider(HealthCheckUseCase, [
-      DrizzlePostgresPoolToken,
-      NodeJsProcessToken,
-    ]),
   ],
 })
 export class ApplicationModule implements NestModule {

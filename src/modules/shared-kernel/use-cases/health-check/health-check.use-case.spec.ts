@@ -1,5 +1,6 @@
-import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
-import { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import type { ApplicationRuntimePort } from "@modules/shared-kernel/ports/application-runtime.port.js";
+import { HealthCheckUseCase } from "@modules/shared-kernel/use-cases/health-check/health-check.use-case.js";
 import { describe, expect, it, vitest } from "vitest";
 
 // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
@@ -34,13 +35,13 @@ function createSystemUnderTest() {
     execute: vitest.fn(),
   };
 
-  const mockedProcess = {
+  const mockedRuntime = {
     uptime: vitest.fn(() => 0),
   };
 
   const useCase = new HealthCheckUseCase(
     mockedDatabase as unknown as SharedKernelDatabase,
-    mockedProcess as unknown as NodeJS.Process,
+    mockedRuntime as ApplicationRuntimePort,
   );
 
   let output: Awaited<ReturnType<HealthCheckUseCase["execute"]>>;
@@ -79,7 +80,7 @@ function createSystemUnderTest() {
             uptime: [
               {
                 componentType: "system",
-                observedValue: mockedProcess.uptime(),
+                observedValue: mockedRuntime.uptime(),
                 observedUnit: "s",
                 status: "pass",
               },

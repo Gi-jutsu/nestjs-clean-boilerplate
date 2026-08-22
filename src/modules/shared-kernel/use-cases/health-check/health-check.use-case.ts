@@ -1,9 +1,10 @@
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import type { ApplicationRuntimePort } from "@modules/shared-kernel/ports/application-runtime.port.js";
 
 export class HealthCheckUseCase {
   constructor(
     private readonly database: SharedKernelDatabase,
-    private readonly process: NodeJS.Process,
+    private readonly runtime: ApplicationRuntimePort,
   ) {}
 
   async execute() {
@@ -18,7 +19,7 @@ export class HealthCheckUseCase {
         uptime: [
           {
             componentType: "system",
-            observedValue: this.process.uptime(),
+            observedValue: this.runtime.uptime(),
             observedUnit: "s",
             status: "pass",
           },
