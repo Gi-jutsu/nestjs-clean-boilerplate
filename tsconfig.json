@@ -5,8 +5,11 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
+      "@api/*": ["./src/api/*"],
       "@core/*": ["./src/core/*"],
       "@identity-and-access/*": ["./src/identity-and-access/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@packages/*": ["./src/packages/*"],
       "@shared-kernel/*": ["./src/shared-kernel/*"]
     },
     "skipLibCheck": true,
