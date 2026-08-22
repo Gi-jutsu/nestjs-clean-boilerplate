@@ -1,5 +1,5 @@
-import { AggregateRoot } from "@core/primitives/aggregate-root.js";
 import type { BrandedInjectionToken } from "@packages/nest-provider-factory";
+import { AggregateRoot } from "@packages/domain-driven-design";
 import type { DatabaseTransaction } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
 
 export interface DomainEventPublisher {

@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@core/primitives/aggregate-root.js";
+import { AggregateRoot } from "@packages/domain-driven-design";
 import { OutboxMessage } from "@shared-kernel/domain/outbox-message/aggregate-root.js";
 import { OutboxMessagesQueuedDomainEvent } from "@shared-kernel/domain/outbox-message/events/outbox-messages-queued.domain-event.js";
 import type { OutboxMessageRepository } from "@shared-kernel/domain/outbox-message/repository.js";
