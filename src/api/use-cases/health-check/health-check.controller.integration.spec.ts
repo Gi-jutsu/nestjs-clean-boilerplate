@@ -1,7 +1,7 @@
+import { bootstrap } from "@api/bootstrap.js";
 import { Server } from "http";
 import supertest from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { bootstrap } from "@api/nestjs/bootstrap.js";
 
 describe("HealthCheckHttpController", () => {
   let server: Server;

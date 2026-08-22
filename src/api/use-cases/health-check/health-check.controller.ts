@@ -1,6 +1,6 @@
+import { Public } from "@api/decorators/public.decorator.js";
+import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
 import { Controller, Get } from "@nestjs/common";
-import { Public } from "@api/nestjs/decorators/public.decorator.js";
-import { HealthCheckUseCase } from "./use-case.js";
 
 @Controller()
 export class HealthCheckHttpController {

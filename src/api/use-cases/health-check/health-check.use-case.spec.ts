@@ -1,6 +1,6 @@
+import { HealthCheckUseCase } from "@api/use-cases/health-check/health-check.use-case.js";
 import { SharedKernelDatabase } from "@shared-kernel/infrastructure/database/drizzle.schema.js";
 import { describe, expect, it, vitest } from "vitest";
-import { HealthCheckUseCase } from "./use-case.js";
 
 // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
 describe("HealthCheckUseCase", () => {

@@ -1,35 +1,26 @@
-import { DrizzlePostgresPoolToken } from "@api/nestjs/drizzle-module/constants.js";
-import { DrizzleModule } from "@api/nestjs/drizzle-module/module.js";
-import { HttpLoggerInterceptor } from "@api/nestjs/interceptors/http-logger.interceptor.js";
-import { MapErrorToRfc9457HttpException } from "@api/nestjs/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
-import { CorrelationIdMiddleware } from "@api/nestjs/middlewares/correlation-id.middleware.js";
+import { DrizzlePostgresPoolToken } from "@api/drizzle-module/constants.js";
+import { DrizzleModule } from "@api/drizzle-module/module.js";
+import { HttpLoggerInterceptor } from "@api/interceptors/http-logger.interceptor.js";
+import { MapErrorToRfc9457HttpException } from "@api/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
+import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
 import { Global, MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import {
-  createNestProvider,
-  type BrandedInjectionToken,
-} from "@packages/nest-provider-factory/index.js";
-import { OutboxMessageRepositoryToken } from "./domain/outbox-message/repository.js";
-import { DomainEventPublisherToken } from "./domain/ports/domain-event-publisher.port.js";
-import { MailerToken } from "./domain/ports/mailer.port.js";
-import { EnvironmentKeys } from "./environment.js";
-import { ConsoleMailer } from "./infrastructure/console-mailer.adapter.js";
-import { OutboxDomainEventPublisher } from "./infrastructure/outbox-domain-event-publisher.adapter.js";
-import { DrizzleOutboxMessageRepository } from "./infrastructure/repositories/drizzle-outbox-message.repository.js";
-import { HealthCheckHttpController } from "./use-cases/health-check/http.controller.js";
-import { HealthCheckUseCase } from "./use-cases/health-check/use-case.js";
-import { ProcessOutboxMessagesDomainEventController } from "./use-cases/process-outbox-messages/domain-event.controller.js";
-import { ProcessOutboxMessagesUseCase } from "./use-cases/process-outbox-messages/use-case.js";
+import { createNestProvider } from "@packages/nest-provider-factory/index.js";
+import { OutboxMessageRepositoryToken } from "@shared-kernel/domain/outbox-message/repository.js";
+import { DomainEventPublisherToken } from "@shared-kernel/domain/ports/domain-event-publisher.port.js";
+import { MailerToken } from "@shared-kernel/domain/ports/mailer.port.js";
+import { SharedKernelEnvironmentKeys } from "@shared-kernel/environment.js";
+import { ConsoleMailer } from "@shared-kernel/infrastructure/console-mailer.adapter.js";
+import { OutboxDomainEventPublisher } from "@shared-kernel/infrastructure/outbox-domain-event-publisher.adapter.js";
+import { DrizzleOutboxMessageRepository } from "@shared-kernel/infrastructure/repositories/drizzle-outbox-message.repository.js";
+import { ProcessOutboxMessagesDomainEventController } from "@shared-kernel/use-cases/process-outbox-messages/domain-event.controller.js";
+import { ProcessOutboxMessagesUseCase } from "@shared-kernel/use-cases/process-outbox-messages/use-case.js";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
-
-const NodeJsProcessToken = Symbol(
-  "Process",
-) as BrandedInjectionToken<NodeJS.Process>;
 
 @Global()
 @Module({
@@ -37,7 +28,9 @@ const NodeJsProcessToken = Symbol(
     DrizzleModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connectionString: config.getOrThrow(EnvironmentKeys.DATABASE_URL),
+        connectionString: config.getOrThrow(
+          SharedKernelEnvironmentKeys.DATABASE_URL,
+        ),
       }),
     }),
     EventEmitterModule.forRoot({ global: true }),
@@ -48,7 +41,6 @@ const NodeJsProcessToken = Symbol(
       },
     ]),
   ],
-  controllers: [HealthCheckHttpController],
   providers: [
     {
       provide: APP_GUARD,
@@ -69,10 +61,6 @@ const NodeJsProcessToken = Symbol(
     /** Infrastructure */
 
     {
-      provide: NodeJsProcessToken,
-      useValue: process,
-    },
-    {
       provide: MailerToken,
       useClass: ConsoleMailer,
     },
@@ -90,11 +78,6 @@ const NodeJsProcessToken = Symbol(
       [DrizzlePostgresPoolToken],
       OutboxMessageRepositoryToken,
     ),
-
-    createNestProvider(HealthCheckUseCase, [
-      DrizzlePostgresPoolToken,
-      NodeJsProcessToken,
-    ]),
 
     createNestProvider(ProcessOutboxMessagesUseCase, [
       OutboxMessageRepositoryToken,

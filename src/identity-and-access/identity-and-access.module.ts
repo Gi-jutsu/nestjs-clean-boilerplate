@@ -1,7 +1,7 @@
+import { createBetterAuthModule } from "@identity-and-access/infrastructure/better-auth-module.factory.js";
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthGuard } from "@thallesp/nestjs-better-auth";
-import { createBetterAuthModule } from "./infrastructure/better-auth-module.factory.js";
 
 @Module({
   imports: [createBetterAuthModule()],

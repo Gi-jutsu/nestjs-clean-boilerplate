@@ -1,10 +1,10 @@
+import { ApplicationModule } from "@api/application.module.js";
+import { ApiEnvironmentKeys } from "@api/environment.js";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
-import { EnvironmentKeys } from "@shared-kernel/environment.js";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import { ApplicationModule } from "./application.module.js";
 
 export async function bootstrap() {
   const logger = new Logger("bootstrap");
@@ -20,9 +20,9 @@ export async function bootstrap() {
   application.useGlobalPipes(new ValidationPipe());
 
   const config = application.get(ConfigService);
-  const host = config.getOrThrow(EnvironmentKeys.API_HTTP_HOST);
-  const port = config.getOrThrow(EnvironmentKeys.API_HTTP_PORT);
-  const scheme = config.getOrThrow(EnvironmentKeys.API_HTTP_SCHEME);
+  const host = config.getOrThrow(ApiEnvironmentKeys.API_HTTP_HOST);
+  const port = config.getOrThrow(ApiEnvironmentKeys.API_HTTP_PORT);
+  const scheme = config.getOrThrow(ApiEnvironmentKeys.API_HTTP_SCHEME);
   const url = `${scheme}://${host}:${port}`;
 
   await application.listen(port, host, () =>

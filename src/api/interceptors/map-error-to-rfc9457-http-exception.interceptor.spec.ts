@@ -21,7 +21,7 @@ import {
   it,
   vitest,
 } from "vitest";
-import { MapErrorToRfc9457HttpException } from "./map-error-to-rfc9457-http-exception.interceptor.js";
+import { MapErrorToRfc9457HttpException } from "@api/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
 
 type HttpExceptionClass = abstract new (...args: any[]) => HttpException;
 type ProblemDetail = Record<string, unknown>;
