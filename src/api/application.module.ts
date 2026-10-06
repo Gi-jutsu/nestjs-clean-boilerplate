@@ -1,20 +1,15 @@
 import { ApplicationEnvironmentSchema } from "@api/environment.js";
-import { HttpLoggerInterceptor } from "@api/interceptors/http-logger.interceptor.js";
 import { ProblemDetailsFilter } from "@api/filters/problem-details.filter.js";
+import { createObserveImports } from "@api/observability/observe.module.js";
 import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
 import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
 import { SharedKernelModule } from "@modules/shared-kernel/shared-kernel.module.js";
 import { HealthCheckHttpController } from "@modules/shared-kernel/use-cases/health-check/health-check.controller.js";
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import {
-  APP_FILTER,
-  APP_GUARD,
-  APP_INTERCEPTOR,
-  HttpAdapterHost,
-} from "@nestjs/core";
-import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { APP_FILTER, APP_GUARD, HttpAdapterHost } from "@nestjs/core";
 import { createNestProvider } from "@packages/nest-provider-factory/index.js";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -25,6 +20,7 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       isGlobal: true,
       validationSchema: ApplicationEnvironmentSchema,
     }),
+    ...createObserveImports(),
     ThrottlerModule.forRoot([
       {
         ttl: ONE_MINUTE_IN_MILLISECONDS,
@@ -39,10 +35,6 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: HttpLoggerInterceptor,
     },
     createNestProvider(ProblemDetailsFilter, [HttpAdapterHost], APP_FILTER),
   ],

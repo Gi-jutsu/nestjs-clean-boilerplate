@@ -1,16 +1,19 @@
 import { ApplicationModule } from "@api/application.module.js";
 import { configureHttpApplication } from "@api/configure-http-application.js";
 import { ApiEnvironmentKeys } from "@api/environment.js";
+import { createHttpApplicationOptions } from "@api/http-application-options.js";
 import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 
 export async function bootstrap() {
+  await ConfigModule.envVariablesLoaded;
   const logger = new Logger("bootstrap");
 
-  const application = await NestFactory.create(ApplicationModule, {
-    logger,
-  });
+  const application = await NestFactory.create(
+    ApplicationModule,
+    createHttpApplicationOptions(),
+  );
 
   application.enableShutdownHooks();
   configureHttpApplication(application);

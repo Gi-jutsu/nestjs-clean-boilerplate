@@ -171,6 +171,14 @@ storage and adding its own endpoints and tests.
 
 For an existing installation, follow the [outbox migration instructions](docs/outbox-migration.md) before deploying this version.
 
+### Optional observability
+
+Application logs use Nest's JSON `ConsoleLogger`. Set `OBSERVE_ENABLED=true` together with `OBSERVE_APP_KEY`, `OBSERVE_APP_SECRET`, `OBSERVE_SERVICE_ID`, and `OBSERVE_ENDPOINT` to enable the official [`@nestjs/observe` SDK](https://docs.nestjs.com/observability/sdk). The endpoint is explicit: use `https://observe-api.nestjs.com` for NestJS Observe or your collector's base URL.
+
+Observe records request durations, provider spans, errors, outgoing calls, and runtime metrics. The request's `x-correlation-id` is shared with its trace and returned in the response; SDK log correlation adds a `traceId` to JSON logs written inside that request. Log forwarding, captured request headers and bodies, and error source snippets are disabled.
+
+With the default `OBSERVE_ENABLED=false`, the SDK module and instrument are omitted. No credentials are required and no telemetry is exported. Application logs and response correlation IDs remain available; request timings and trace collection are enabled only with Observe.
+
 ### 🐳 Docker-Ready
 
 - <b>Optimized for Deployments</b>: Multi-stage build keeps the production image lean, reducing network footprint and speeding up deployments.
