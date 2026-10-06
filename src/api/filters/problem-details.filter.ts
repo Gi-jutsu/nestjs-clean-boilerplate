@@ -45,6 +45,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       this.logger.error(error, undefined, correlationId);
     }
 
+    if (adapter.isHeadersSent(response)) {
+      adapter.end(response);
+      return;
+    }
+
     adapter.setHeader(response, "Content-Type", "application/problem+json");
     adapter.reply(
       response,

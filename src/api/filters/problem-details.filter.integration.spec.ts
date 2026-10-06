@@ -15,6 +15,7 @@ import {
   NestMiddleware,
   NestModule,
   Post,
+  Res,
   ServiceUnavailableException,
   UseGuards,
   type INestApplication,
@@ -26,6 +27,7 @@ import {
   ResourceNotFoundError,
 } from "@packages/domain-driven-design/index.js";
 import { IsEmail } from "class-validator";
+import type { Response as ExpressResponse } from "express";
 import supertest, { type Response } from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -177,6 +179,14 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
     systemUnderTest.thenTheInstanceContainsOnlyThePath();
   });
 
+  it("ends an already started response when a controller fails", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+
+    await systemUnderTest.whenTheControllerFailsAfterStartingItsResponse();
+
+    systemUnderTest.thenTheStartedResponseIsCompleted();
+  });
+
   beforeEach(async () => {
     const testingModule = await Test.createTestingModule({
       imports: [ErrorScenariosModule],
@@ -322,6 +332,12 @@ function createSystemUnderTest(application: INestApplication) {
         .get("/errors/account?token=private-query-token")
         .set("x-correlation-id", CORRELATION_ID);
     },
+    async whenTheControllerFailsAfterStartingItsResponse() {
+      response = await client
+        .get("/errors/started")
+        .set("x-correlation-id", CORRELATION_ID)
+        .timeout({ deadline: 1_000 });
+    },
     thenTheProblemIs(expected: Record<string, unknown>) {
       assertProblem(expected);
     },
@@ -388,6 +404,11 @@ function createSystemUnderTest(application: INestApplication) {
         errors: [{ path: ["email"], message: "Invalid email" }],
       });
     },
+    thenTheStartedResponseIsCompleted() {
+      expect(response.status).toBe(200);
+      expect(response.text).toBe("partial response");
+      expect(response.text).not.toContain(PRIVATE_ERROR_DETAIL);
+    },
   };
 }
 
@@ -435,6 +456,13 @@ class ErrorScenariosController {
   @Get("middleware")
   middlewareAccount() {
     return { account: "middleware" };
+  }
+
+  @Get("started")
+  startedResponse(@Res() response: ExpressResponse) {
+    response.type("text/plain");
+    response.write("partial response");
+    throw new Error(PRIVATE_ERROR_DETAIL);
   }
 }
 
