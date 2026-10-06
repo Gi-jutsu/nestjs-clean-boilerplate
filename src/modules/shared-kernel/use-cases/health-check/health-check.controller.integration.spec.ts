@@ -32,6 +32,17 @@ describe("HealthCheckHttpController", () => {
     systemUnderTest.thenPostgreSQLIsUnavailable();
   });
 
+  it("answers within the health deadline when the database pool is busy", async () => {
+    const systemUnderTest = createSystemUnderTest(healthCheckApplication);
+    await systemUnderTest.givenAllDatabaseConnectionsAreBusy();
+
+    await systemUnderTest.whenTheHealthCheckIsRequested();
+
+    systemUnderTest.thenTheRequestHasStatus(503);
+    systemUnderTest.thenPostgreSQLIsUnavailable();
+    systemUnderTest.thenTheHealthDeadlineIsRespected();
+  });
+
   beforeEach(async () => {
     healthCheckApplication = await createTestingHealthCheckApplication();
   });
@@ -45,20 +56,31 @@ function createSystemUnderTest(
   >,
 ) {
   let response: Response;
+  let responseTime: number;
 
   return {
     givenPostgreSQLIsUnavailable() {
       return healthCheckApplication.closeDatabase();
     },
 
+    givenAllDatabaseConnectionsAreBusy() {
+      return healthCheckApplication.reserveDatabaseConnection();
+    },
+
     async whenTheHealthCheckIsRequested() {
+      const startedAt = performance.now();
       response = await supertest(
         healthCheckApplication.application.getHttpServer(),
       ).get("/health-check");
+      responseTime = performance.now() - startedAt;
     },
 
     thenTheRequestHasStatus(status: number) {
       expect(response.status).toBe(status);
+    },
+
+    thenTheHealthDeadlineIsRespected() {
+      expect(responseTime).toBeLessThan(2_000);
     },
 
     thenPostgreSQLIsHealthy() {
@@ -89,7 +111,10 @@ function createSystemUnderTest(
 }
 
 async function createTestingHealthCheckApplication() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+  });
   const database = drizzle(pool, { schema: SharedKernelDatabaseSchema });
   const testingModule = await Test.createTestingModule({
     imports: [ApplicationModule],
@@ -106,6 +131,7 @@ async function createTestingHealthCheckApplication() {
   await application.init();
 
   let databaseClosed = false;
+  let releaseDatabaseConnection = () => {};
 
   async function closeDatabase() {
     if (!databaseClosed && !pool.ended) {
@@ -117,7 +143,12 @@ async function createTestingHealthCheckApplication() {
   return {
     application,
     closeDatabase,
+    async reserveDatabaseConnection() {
+      const connection = await pool.connect();
+      releaseDatabaseConnection = () => connection.release();
+    },
     async close() {
+      releaseDatabaseConnection();
       try {
         await application.close();
       } finally {

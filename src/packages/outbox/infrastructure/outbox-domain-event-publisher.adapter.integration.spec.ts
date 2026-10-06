@@ -9,7 +9,7 @@ import {
   type INestApplicationContext,
 } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { NestFactory } from "@nestjs/core";
+import { Test } from "@nestjs/testing";
 import {
   OnOutboxMessage,
   OutboxInbox,
@@ -230,10 +230,11 @@ describe("OutboxDomainEventPublisher with PostgreSQL", () => {
   });
 
   beforeAll(async () => {
-    application = await NestFactory.createApplicationContext(
-      OutboxTestingModule,
-      { logger: false },
-    );
+    application = await Test.createTestingModule({
+      imports: [OutboxTestingModule],
+    }).compile();
+    application.useLogger(false);
+    await application.init();
     database = application.get(SharedKernelDatabaseToken);
     await database.execute(
       sql`CREATE TABLE outbox_test_orders (id text PRIMARY KEY)`,
