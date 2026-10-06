@@ -67,6 +67,17 @@ docker compose -f docker/docker-compose.yaml up api -d
 
 ## 🌟 Key Features
 
+### 🗃️ PostgreSQL with official NestJS Drizzle integration
+
+[`@nestjs/drizzle`](https://docs.nestjs.com/data/drizzle) creates the database
+through `DrizzleModule.forRootAsync()`, using `ConfigService` and the shared
+schema. Better Auth and the outbox use this same database and connection pool.
+NestJS closes the pool when the application shuts down.
+
+Inject the database with the official `@InjectDrizzle()` decorator or
+`getDrizzleToken()` factory token. The `SharedKernelDatabaseToken` alias preserves
+the database type when registering plain classes with `createNestProvider()`.
+
 ### 📬 Outbox Pattern
 
 - <b>Guaranteed Event Delivery</b>: ensure events are reliably stored and dispatched achieving at-least-once delivery.

@@ -3,10 +3,14 @@ import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructur
 import { ConfigService } from "@nestjs/config";
 import type {
   DrizzleModuleAsyncOptions,
-  DrizzleModuleOptions,
-} from "@packages/nest-drizzle/index.js";
+  DrizzleModuleFactoryOptions,
+} from "@nestjs/drizzle";
+import { drizzle } from "drizzle-orm/node-postgres";
 
-export function createSharedKernelDrizzleModuleOptions(): DrizzleModuleAsyncOptions {
+export function createSharedKernelDrizzleModuleOptions(): DrizzleModuleAsyncOptions<
+  unknown,
+  typeof drizzle
+> {
   return {
     inject: [ConfigService],
     useFactory: createSharedKernelDatabaseOptions,
@@ -15,13 +19,14 @@ export function createSharedKernelDrizzleModuleOptions(): DrizzleModuleAsyncOpti
 
 function createSharedKernelDatabaseOptions(
   config: ConfigService,
-): DrizzleModuleOptions {
+): DrizzleModuleFactoryOptions<unknown, typeof drizzle> {
   const connectionString = config.getOrThrow(
     SharedKernelEnvironmentKeys.DATABASE_URL,
   );
 
   return {
-    connectionString,
+    drizzle,
+    connection: connectionString,
     schema: SharedKernelDatabaseSchema,
   };
 }

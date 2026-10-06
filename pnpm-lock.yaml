@@ -17,6 +17,9 @@ importers:
       '@nestjs/core':
         specifier: ^11.2.1
         version: 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@11.2.1)(@nestjs/websockets@11.1.9)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/drizzle':
+        specifier: 0.0.1
+        version: 0.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0))(reflect-metadata@0.2.2)
       '@nestjs/event-emitter':
         specifier: ^3.1.0
         version: 3.1.0(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)
@@ -1285,6 +1288,15 @@ packages:
         optional: true
       '@nestjs/websockets':
         optional: true
+
+  '@nestjs/drizzle@0.0.1':
+    resolution: {integrity: sha512-btThq+3IbpSGIMix0zkOoxD0q6tVqjbjTIEzVt7O4fXvJKwS8mis6MjeMzwB9l5mv069LUV7B7hkLZJJ+MI4Bg==}
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      '@nestjs/common': ^11.0.0 || ^12.0.0
+      '@nestjs/core': ^11.0.0 || ^12.0.0
+      drizzle-orm: '>=0.35.0 || >=1.0.0-0'
+      reflect-metadata: ^0.1.13 || ^0.2.0
 
   '@nestjs/event-emitter@3.1.0':
     resolution: {integrity: sha512-DOY/4XBGyIjYyOJKkO6jl1kzFE0ZfX0wV+M2HR5NWymPT9Z0zdCEcZGxTXXkoMRwPtglnvCGJALSjOpXPIcM3g==}
@@ -5602,6 +5614,13 @@ snapshots:
     optionalDependencies:
       '@nestjs/platform-express': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)(supports-color@10.2.2)
       '@nestjs/websockets': 11.1.9(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+
+  '@nestjs/drizzle@0.0.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0))(reflect-metadata@0.2.2)':
+    dependencies:
+      '@nestjs/common': 11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@11.2.1)(@nestjs/websockets@11.1.9)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0)
+      reflect-metadata: 0.2.2
 
   '@nestjs/event-emitter@3.1.0(@nestjs/common@11.2.1(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@11.2.1)':
     dependencies:
