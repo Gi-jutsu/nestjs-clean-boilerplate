@@ -1,6 +1,8 @@
 {
   "type": "module",
   "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "build": "nest build",
     "build:watch": "nest build --watch",
     "dev": "nest start --watch",

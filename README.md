@@ -37,17 +37,38 @@ cd nestjs-clean-boilerplate
 
 ### 2. Bootstrap the PostgreSQL database
 
-2.1. Start PostgreSQL using [docker-compose.yaml](/docker/docker-compose.yaml)
+Install dependencies and configure the application first:
 
 ```shell
-docker compose -f docker/docker-compose.yaml up database -d
+pnpm install
+cp .env.example .env
 ```
 
-2.2. Run the SQL migrations
+Set `DATABASE_URL` in `.env` to your PostgreSQL connection string.
+
+2.1. Start PostgreSQL using [docker-compose.yaml](docker-compose.yaml)
 
 ```shell
-pnpm drizzle-kit migrate
+docker compose up database -d
 ```
+
+2.2. Generate your application's initial migration
+
+```shell
+pnpm db:generate --name=initial
+```
+
+Review and commit the generated SQL, snapshots, and journal in `drizzle/`, then
+apply them:
+
+```shell
+pnpm db:migrate
+```
+
+The boilerplate ships schema definitions and generation commands. Each application
+owns its migration history. Preserve that history when adopting template updates;
+generate and review subsequent migrations against your application's latest
+snapshot. See [migration ownership](docs/database-migrations.md) for existing apps.
 
 ### 3. Start the API
 
@@ -59,10 +80,13 @@ You can run the backend either **locally** or **with Docker**.
 pnpm dev
 ```
 
-#### Otpion B: Run with Docker
+#### Option B: Run with Docker
+
+Set `DATABASE_URL` in `.env.docker` to use the Compose hostname `database`
+(e.g. `postgresql://admin:password@database:5432/database`).
 
 ```shell
-docker compose -f docker/docker-compose.yaml up api -d
+docker compose up nestjs-clean-boilerplate -d
 ```
 
 ## 🌟 Key Features
@@ -88,7 +112,7 @@ the database type when registering plain classes with `createNestProvider()`.
 
 - <b>Optimized for Deployments</b>: Multi-stage build keeps the production image lean, reducing network footprint and speeding up deployments.
 
-- <b>Run Locally:</b> Launch the entire stack (API + Database) with [docker-compose.yaml](/docker/docker-compose.yaml)
+- <b>Run Locally:</b> Launch the entire stack (API + Database) with [docker-compose.yaml](docker-compose.yaml)
 
 - <b>Security</b>: Runs as a non-root user to reduce security risks</b>
 
