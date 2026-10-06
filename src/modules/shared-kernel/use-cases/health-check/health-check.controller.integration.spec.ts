@@ -78,8 +78,9 @@ function createSystemUnderTest(
         responseTime: expect.any(Number),
       });
 
-      expect(response.body).toEqual({
-        status: "error",
+      expect(response.body).toMatchObject({
+        status: 503,
+        title: "Service Unavailable",
         info: {},
         error: { postgresql },
         details: { postgresql },

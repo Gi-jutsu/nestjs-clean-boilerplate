@@ -1,14 +1,20 @@
 import { ApplicationEnvironmentSchema } from "@api/environment.js";
 import { HttpLoggerInterceptor } from "@api/interceptors/http-logger.interceptor.js";
-import { MapErrorToRfc9457HttpException } from "@api/interceptors/map-error-to-rfc9457-http-exception.interceptor.js";
+import { ProblemDetailsFilter } from "@api/filters/problem-details.filter.js";
 import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
 import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
 import { SharedKernelModule } from "@modules/shared-kernel/shared-kernel.module.js";
 import { HealthCheckHttpController } from "@modules/shared-kernel/use-cases/health-check/health-check.controller.js";
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import {
+  APP_FILTER,
+  APP_GUARD,
+  APP_INTERCEPTOR,
+  HttpAdapterHost,
+} from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { createNestProvider } from "@packages/nest-provider-factory/index.js";
 
 const ONE_MINUTE_IN_MILLISECONDS = 60_000;
 const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
@@ -38,10 +44,7 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggerInterceptor,
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: MapErrorToRfc9457HttpException,
-    },
+    createNestProvider(ProblemDetailsFilter, [HttpAdapterHost], APP_FILTER),
   ],
 })
 export class ApplicationModule implements NestModule {
