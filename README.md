@@ -80,9 +80,13 @@ the database type when registering plain classes with `createNestProvider()`.
 
 ### 📬 Outbox Pattern
 
-- <b>Guaranteed Event Delivery</b>: ensure events are reliably stored and dispatched achieving at-least-once delivery.
-- <b>Concurrency</b>: Leverages `REPEATABLE READ` isolation and `FOR UPDATE SKIP LOCKED` to ensure efficient and exclusive message processing, even under high load.
-- <b>Transaction Safety</b>: Events are saved in the outbox as part of the same database transaction as aggregate updates, ensuring consistency.
+- [NestJS transactional outbox](https://docs.nestjs.com/reliability/outbox) owns PostgreSQL storage, polling, retries, dead letters, leases, and consumer inboxes.
+- Pass the current Drizzle transaction to `DomainEventPublisher.publish(aggregate, transaction)`. Aggregate changes and their events commit or roll back together; the relay only sees committed rows.
+- `@OnOutboxMessage(topic, { consumer })` discovers consumers. Give each consumer a stable name and use `context.processInTransaction(transaction, work)` when its effects belong to the same database.
+- Delivery is at least once. Consumers that call external services must use those services' idempotency support. Messages from the same aggregate are delivered in insertion order.
+- Run `pnpm drizzle-kit migrate` before starting the application, including production deployments. The migration creates the package-owned `nest_outbox` schema; application startup checks it without changing it.
+
+For an existing installation, follow the [outbox migration instructions](docs/outbox-migration.md) before deploying this version.
 
 ### 🐳 Docker-Ready
 
