@@ -29,6 +29,13 @@
       "when": 1791325979822,
       "tag": "0003_official_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791326243002,
+      "tag": "0004_native_authentication",
+      "breakpoints": true
     }
   ]
 }

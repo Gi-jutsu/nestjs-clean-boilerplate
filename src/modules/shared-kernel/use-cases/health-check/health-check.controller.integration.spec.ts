@@ -125,7 +125,6 @@ async function createTestingHealthCheckApplication() {
     .compile();
 
   const application = testingModule.createNestApplication({
-    bodyParser: false,
     logger: false,
   });
   configureHttpApplication(application);

@@ -1,13 +1,13 @@
 import {
   accountSchema,
-  sessionSchema,
+  authenticationSessionSchema,
   userSchema,
 } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
 import type { INestApplication } from "@nestjs/common";
 import { getDrizzleToken } from "@nestjs/drizzle";
-import { AuthService } from "@thallesp/nestjs-better-auth";
+import { CredentialsService } from "@modules/identity-and-access/infrastructure/authentication/credentials.service.js";
 import { eq, sql } from "drizzle-orm";
 import supertest, { type Response } from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -75,7 +75,7 @@ describe("ApplicationModule database and authentication", () => {
 
 function createSystemUnderTest(application: INestApplication) {
   const database = application.get<SharedKernelDatabase>(getDrizzleToken());
-  const authentication = application.get(AuthService);
+  const authentication = application.get(CredentialsService);
   const client = supertest(application.getHttpServer());
   let signInResponse: Response;
   let otherApplicationSignInResponse: Response;
@@ -139,7 +139,9 @@ function createSystemUnderTest(application: INestApplication) {
       expect(signInResponse.status).toBe(200);
       const [storedUser] = await database.select().from(userSchema);
       const [storedAccount] = await database.select().from(accountSchema);
-      const storedSessions = await database.select().from(sessionSchema);
+      const storedSessions = await database
+        .select()
+        .from(authenticationSessionSchema);
       expect(storedUser).toMatchObject({
         email: REGISTERED_USER.email,
         name: REGISTERED_USER.name,
@@ -187,12 +189,7 @@ function createSystemUnderTest(application: INestApplication) {
 
     async thenAuthenticationCannotOpenAnotherConnection() {
       await expect(
-        authentication.api.signInEmail({
-          body: {
-            email: REGISTERED_USER.email,
-            password: REGISTERED_USER.password,
-          },
-        }),
+        authentication.verify(REGISTERED_USER.email, REGISTERED_USER.password),
       ).rejects.toThrow();
     },
 

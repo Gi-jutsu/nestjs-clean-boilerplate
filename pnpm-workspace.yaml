@@ -1,6 +1,6 @@
 allowBuilds:
   "@swc/core": true
-  bcrypt: true
+  bcrypt: set this to true or false
   cpu-features: true
   esbuild: true
   protobufjs: true

@@ -9,7 +9,6 @@ export async function bootstrap() {
   const logger = new Logger("bootstrap");
 
   const application = await NestFactory.create(ApplicationModule, {
-    bodyParser: false, // Required for Better Auth | https://www.better-auth.com/docs/integrations/nestjs
     logger,
   });
 

@@ -5,14 +5,19 @@ import { Test } from "@nestjs/testing";
 
 export async function createTestingApplication(
   metadata: ModuleMetadata = { imports: [ApplicationModule] },
-  options: Pick<NestApplicationOptions, "bodyParser"> = { bodyParser: false },
+  options: Pick<NestApplicationOptions, "bodyParser"> = { bodyParser: true },
 ) {
   const module = await Test.createTestingModule(metadata).compile();
   const application = module.createNestApplication(options);
 
   application.useLogger(false);
   configureHttpApplication(application);
-  await application.init();
+  try {
+    await application.init();
+  } catch (error) {
+    await application.close();
+    throw error;
+  }
 
   return application;
 }
