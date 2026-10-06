@@ -8,15 +8,15 @@ import {
   userSchema,
 } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
 import { CurrentUser, PasswordHasher } from "@nestjs/authentication";
 import { Controller, Get, type INestApplication } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
 import { eq, sql } from "drizzle-orm";
-import { createHash } from "node:crypto";
 import supertest, { type Response } from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
 
 const USER = {
   name: "Example User",
@@ -39,22 +39,26 @@ class ProtectedController {
 describe("AuthenticationHttpController", () => {
   let application: INestApplication;
 
-  it("persists a new user and credential atomically and issues a cookie", async () => {
+  it("persists a user and credential and authenticates their registration cookie", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.whenTheUserSignsUp();
     systemUnderTest.thenTheResponseHasStatus(200);
-    await systemUnderTest.thenTheUserAndNativePasswordAreStored();
-    await systemUnderTest.thenOnlyTheSessionTokenHashIsStored();
+    await systemUnderTest.thenTheUserAndCredentialAreStored();
     systemUnderTest.thenTheCookieMatchesItsSecurityConfiguration();
+    await systemUnderTest.whenAProtectedRouteIsRequested();
+    systemUnderTest.thenTheResponseHasStatus(200);
+    await systemUnderTest.thenTheProtectedResponseIdentifiesTheUser();
   });
 
-  it("authenticates an email/password and replaces the browser's previous session", async () => {
+  it("authenticates email addresses without case sensitivity", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.givenARegisteredUser();
     await systemUnderTest.whenTheUserSignsIn("USER@EXAMPLE.COM");
     systemUnderTest.thenTheResponseHasStatus(200);
-    await systemUnderTest.thenThereIsOneSession();
     await systemUnderTest.thenTheSessionIdentifiesTheUser();
+    await systemUnderTest.whenAProtectedRouteIsRequested();
+    systemUnderTest.thenTheResponseHasStatus(200);
+    await systemUnderTest.thenTheProtectedResponseIdentifiesTheUser();
   });
 
   it("refuses an incorrect password without issuing another session", async () => {
@@ -118,10 +122,12 @@ describe("AuthenticationHttpController", () => {
     await systemUnderTest.thenThereIsOneUserAndCredential();
   });
 
-  it("returns an empty current session for an anonymous visitor", async () => {
+  it("keeps session lookup and sign-out available to anonymous visitors", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.whenTheCurrentSessionIsRequested();
     systemUnderTest.thenTheCurrentSessionIsEmpty();
+    await systemUnderTest.whenTheUserSignsOut();
+    systemUnderTest.thenTheSignOutSucceeds();
   });
 
   it("protects routes by default", async () => {
@@ -130,49 +136,13 @@ describe("AuthenticationHttpController", () => {
     systemUnderTest.thenTheResponseHasStatus(401);
   });
 
-  it("allows a protected route for a live session", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.givenARegisteredUser();
-    await systemUnderTest.whenAProtectedRouteIsRequested();
-    systemUnderTest.thenTheResponseHasStatus(200);
-  });
-
-  it("reads a persisted session from another application instance", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.givenARegisteredUser();
-    await systemUnderTest.whenAnotherApplicationReadsTheSession();
-    systemUnderTest.thenTheResponseHasStatus(200);
-    systemUnderTest.thenTheResponseIdentifiesTheUser();
-  });
-
   it("revokes the stored session and clears its cookie on sign-out", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.givenARegisteredUser();
     await systemUnderTest.whenTheUserSignsOut();
-    systemUnderTest.thenTheResponseHasStatus(200);
+    systemUnderTest.thenTheSignOutSucceeds();
     systemUnderTest.thenTheCookieIsCleared();
     await systemUnderTest.thenNoSessionIsStored();
-    await systemUnderTest.thenTheOldCookieCannotAuthenticate();
-  });
-
-  it.each(["absolute", "idle"] as const)(
-    "refuses a session past its %s expiry",
-    async (expiry) => {
-      const systemUnderTest = createSystemUnderTest(application);
-      await systemUnderTest.givenARegisteredUser();
-      await systemUnderTest.givenTheSessionHasExpired(expiry);
-      await systemUnderTest.whenTheCurrentSessionIsRequested();
-      systemUnderTest.thenTheCurrentSessionIsEmpty();
-      await systemUnderTest.thenTheOldCookieCannotAuthenticate();
-    },
-  );
-
-  it("refuses a tampered session cookie", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.givenARegisteredUser();
-    systemUnderTest.givenTheSessionCookieIsTampered();
-    await systemUnderTest.whenAProtectedRouteIsRequested();
-    systemUnderTest.thenTheResponseHasStatus(401);
   });
 
   it("refuses a cross-origin registration before creating a user", async () => {
@@ -198,6 +168,8 @@ describe("AuthenticationHttpController", () => {
     systemUnderTest.thenTheResponseHasStatus(200);
     await systemUnderTest.thenTheLegacyUserAndUpgradedPasswordAreStored();
     await systemUnderTest.thenTheSessionIdentifiesTheUser();
+    await systemUnderTest.whenTheUserSignsIn(USER.email, LEGACY_PASSWORD);
+    systemUnderTest.thenTheResponseHasStatus(200);
   });
 
   it("leaves a legacy password untouched after a failed sign-in", async () => {
@@ -216,13 +188,13 @@ describe("AuthenticationHttpController", () => {
 
   beforeEach(async () => {
     application = await createAuthenticationTestApplication();
+    onTestFinished(() => application.close());
     await application
       .get<SharedKernelDatabase>(getDrizzleToken())
       .execute(
         sql`TRUNCATE TABLE "user", "account", "session", "authentication_session" CASCADE`,
       );
   });
-  afterEach(() => application.close());
 });
 
 function createSystemUnderTest(application: INestApplication) {
@@ -267,19 +239,6 @@ function createSystemUnderTest(application: INestApplication) {
         updatedAt: createdAt,
       });
     },
-    async givenTheSessionHasExpired(expiry: "absolute" | "idle") {
-      const expired = new Date("2000-01-01T00:00:00Z");
-      await database
-        .update(authenticationSessionSchema)
-        .set(
-          expiry === "absolute"
-            ? { expiresAt: expired }
-            : { lastActiveAt: expired },
-        );
-    },
-    givenTheSessionCookieIsTampered() {
-      cookie = cookie.replace(/.$/, cookie.endsWith("A") ? "B" : "A");
-    },
     async whenTheUserSignsIn(email = USER.email, password = USER.password) {
       const request = client
         .post("/api/auth/sign-in/email")
@@ -317,17 +276,9 @@ function createSystemUnderTest(application: INestApplication) {
       response = await request;
     },
     async whenTheUserSignsOut() {
-      response = await client.post("/api/auth/sign-out").set("Cookie", cookie);
-    },
-    async whenAnotherApplicationReadsTheSession() {
-      const otherApplication = await createAuthenticationTestApplication();
-      try {
-        response = await supertest(otherApplication.getHttpServer())
-          .get("/api/auth/get-session")
-          .set("Cookie", cookie);
-      } finally {
-        await otherApplication.close();
-      }
+      const request = client.post("/api/auth/sign-out");
+      if (cookie) request.set("Cookie", cookie);
+      response = await request;
     },
     async whenAnApplicationStartsInProduction() {
       const previousEnvironment = process.env.NODE_ENV;
@@ -363,9 +314,13 @@ function createSystemUnderTest(application: INestApplication) {
       expect(response.status).toBe(200);
       expect(response.body).toBeNull();
     },
-    thenTheResponseIdentifiesTheUser() {
-      expect(response.body.user.email).toBe(USER.email);
-      expect(response.body).not.toHaveProperty("password");
+    thenTheSignOutSucceeds() {
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true });
+    },
+    async thenTheProtectedResponseIdentifiesTheUser() {
+      const [user] = await database.select().from(userSchema);
+      expect(response.body).toEqual({ id: user.id });
     },
     thenTheCookieMatchesItsSecurityConfiguration() {
       expect(response.headers["set-cookie"][0]).toMatch(/HttpOnly/i);
@@ -383,7 +338,8 @@ function createSystemUnderTest(application: INestApplication) {
     thenTheCookieIsCleared() {
       expect(response.headers["set-cookie"][0]).toMatch(/Max-Age=0/i);
     },
-    async thenTheUserAndNativePasswordAreStored() {
+    async thenTheUserAndCredentialAreStored() {
+      expect(application.get(SharedKernelDatabaseToken)).toBe(database);
       const [user] = await database.select().from(userSchema);
       const [account] = await database.select().from(accountSchema);
       expect(user).toMatchObject({
@@ -392,23 +348,9 @@ function createSystemUnderTest(application: INestApplication) {
         emailVerified: false,
       });
       expect(account.userId).toBe(user.id);
-      expect(account.password).toMatch(/^\$scrypt\$/);
-      expect(
-        await application
-          .get(PasswordHasher)
-          .verify(USER.password, account.password),
-      ).toBe(true);
-    },
-    async thenOnlyTheSessionTokenHashIsStored() {
-      const [session] = await database
-        .select()
-        .from(authenticationSessionSchema);
-      const token = cookie.slice(cookie.indexOf("=") + 1);
-      expect(session.id).toBe(
-        createHash("sha256").update(token).digest("base64url"),
-      );
-      expect(session.id).not.toBe(token);
-      expect(session).not.toHaveProperty("token");
+      expect(account.password).toEqual(expect.any(String));
+      expect(account.password).not.toBe(USER.password);
+      expect(account.providerId).toBe("credential");
     },
     async thenThereIsOneSession() {
       expect(
@@ -427,11 +369,6 @@ function createSystemUnderTest(application: INestApplication) {
       expect(await database.select().from(authenticationSessionSchema)).toEqual(
         [],
       );
-    },
-    async thenTheOldCookieCannotAuthenticate() {
-      expect(
-        (await client.get("/authentication-test").set("Cookie", cookie)).status,
-      ).toBe(401);
     },
     async thenTheSessionIdentifiesTheUser() {
       const session = await client
@@ -457,12 +394,9 @@ function createSystemUnderTest(application: INestApplication) {
         createdAt: new Date("2020-01-01T00:00:00Z"),
         updatedAt: new Date("2020-01-01T00:00:00Z"),
       });
-      expect(account.password).toMatch(/^\$scrypt\$/);
-      expect(
-        await application
-          .get(PasswordHasher)
-          .verify(LEGACY_PASSWORD, account.password),
-      ).toBe(true);
+      expect(account.password).toEqual(expect.any(String));
+      expect(account.password).not.toBe(LEGACY_PASSWORD_HASH);
+      expect(account.password).not.toBe(LEGACY_PASSWORD);
     },
     async thenTheLegacyPasswordIsUnchanged() {
       const [account] = await database

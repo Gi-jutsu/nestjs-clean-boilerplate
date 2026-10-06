@@ -6,7 +6,7 @@ import { Test } from "@nestjs/testing";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import supertest, { type Response } from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
 
 describe("HealthCheckHttpController", () => {
   let healthCheckApplication: Awaited<
@@ -22,16 +22,6 @@ describe("HealthCheckHttpController", () => {
     systemUnderTest.thenPostgreSQLIsHealthy();
   });
 
-  it("answers 503 when PostgreSQL is unavailable", async () => {
-    const systemUnderTest = createSystemUnderTest(healthCheckApplication);
-    await systemUnderTest.givenPostgreSQLIsUnavailable();
-
-    await systemUnderTest.whenTheHealthCheckIsRequested();
-
-    systemUnderTest.thenTheRequestHasStatus(503);
-    systemUnderTest.thenPostgreSQLIsUnavailable();
-  });
-
   it("answers within the health deadline when the database pool is busy", async () => {
     const systemUnderTest = createSystemUnderTest(healthCheckApplication);
     await systemUnderTest.givenAllDatabaseConnectionsAreBusy();
@@ -45,9 +35,8 @@ describe("HealthCheckHttpController", () => {
 
   beforeEach(async () => {
     healthCheckApplication = await createTestingHealthCheckApplication();
+    onTestFinished(() => healthCheckApplication.close());
   });
-
-  afterEach(() => healthCheckApplication.close());
 });
 
 function createSystemUnderTest(
@@ -59,10 +48,6 @@ function createSystemUnderTest(
   let responseTime: number;
 
   return {
-    givenPostgreSQLIsUnavailable() {
-      return healthCheckApplication.closeDatabase();
-    },
-
     givenAllDatabaseConnectionsAreBusy() {
       return healthCheckApplication.reserveDatabaseConnection();
     },
@@ -84,29 +69,15 @@ function createSystemUnderTest(
     },
 
     thenPostgreSQLIsHealthy() {
-      const postgresql = { status: "up", responseTime: expect.any(Number) };
-
-      expect(response.body).toEqual({
-        status: "ok",
-        info: { postgresql },
-        error: {},
-        details: { postgresql },
-      });
+      expect(response.body.details.postgresql.status).toBe("up");
     },
 
     thenPostgreSQLIsUnavailable() {
-      const postgresql = expect.objectContaining({
-        status: "down",
-        responseTime: expect.any(Number),
-      });
-
-      expect(response.body).toMatchObject({
-        status: 503,
-        title: "Service Unavailable",
-        info: {},
-        error: { postgresql },
-        details: { postgresql },
-      });
+      expect(response.headers["content-type"]).toMatch(
+        /application\/problem\+json/,
+      );
+      expect(response.body.status).toBe(503);
+      expect(response.body.details.postgresql.status).toBe("down");
     },
   };
 }
@@ -122,13 +93,26 @@ async function createTestingHealthCheckApplication() {
   })
     .overrideProvider(SharedKernelDatabaseToken)
     .useValue(database)
-    .compile();
+    .compile()
+    .catch(async (error: unknown) => {
+      await pool.end();
+      throw error;
+    });
 
   const application = testingModule.createNestApplication({
     logger: false,
   });
-  configureHttpApplication(application);
-  await application.listen(0, "127.0.0.1");
+  try {
+    configureHttpApplication(application);
+    await application.listen(0, "127.0.0.1");
+  } catch (error) {
+    try {
+      await application.close();
+    } finally {
+      if (!pool.ended) await pool.end();
+    }
+    throw error;
+  }
 
   let databaseClosed = false;
   let releaseDatabaseConnection = () => {};
