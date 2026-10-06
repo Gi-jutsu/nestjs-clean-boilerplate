@@ -1,27 +1,45 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { fromDrizzle, PostgresOutboxStore } from "@nestjs/outbox/postgres";
+import { pushSchema } from "drizzle-kit/api";
+import { getTableName } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
 export async function bootstrapPostgresSqlContainer() {
-  const postgreSqlContainer = await new PostgreSqlContainer(
-    "postgres:latest",
-  ).start();
-  const postgreSqlClient = new pg.Client({
-    connectionString: postgreSqlContainer.getConnectionUri(),
-  });
-
-  await postgreSqlClient.connect();
-  process.env.DATABASE_URL = postgreSqlContainer.getConnectionUri();
-
-  await applySqlMigrations(postgreSqlClient);
-
-  await postgreSqlClient.end();
-
-  return postgreSqlContainer;
+  const container = await new PostgreSqlContainer("postgres:latest").start();
+  process.env.DATABASE_URL = container.getConnectionUri();
+  try {
+    await preparePostgresSqlDatabase(container.getConnectionUri());
+  } catch (error) {
+    await container.stop();
+    throw error;
+  }
+  return container;
 }
 
-async function applySqlMigrations(pg: pg.Client) {
-  const client = drizzle(pg);
-  await migrate(client, { migrationsFolder: "./drizzle" });
+export async function preparePostgresSqlDatabase(connectionString: string) {
+  const client = new pg.Client({ connectionString });
+  try {
+    await client.connect();
+    const database = drizzle(client);
+    const preparation = await pushSchema(
+      SharedKernelDatabaseSchema,
+      database,
+      ["public"],
+      Object.values(SharedKernelDatabaseSchema).map(getTableName),
+    );
+    if (preparation.hasDataLoss || preparation.warnings.length > 0) {
+      throw new Error(
+        "Refusing test database schema changes that may lose data or require review.",
+      );
+    }
+    await preparation.apply();
+    await new PostgresOutboxStore({
+      executor: fromDrizzle(database),
+      migrate: false,
+    }).migrate();
+  } finally {
+    await client.end();
+  }
 }
