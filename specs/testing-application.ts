@@ -13,7 +13,7 @@ export async function createTestingApplication(
   application.useLogger(false);
   configureHttpApplication(application);
   try {
-    await application.init();
+    await application.listen(0, "127.0.0.1");
   } catch (error) {
     await application.close();
     throw error;

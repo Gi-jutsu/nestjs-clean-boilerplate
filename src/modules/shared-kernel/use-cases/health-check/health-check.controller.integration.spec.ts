@@ -128,7 +128,7 @@ async function createTestingHealthCheckApplication() {
     logger: false,
   });
   configureHttpApplication(application);
-  await application.init();
+  await application.listen(0, "127.0.0.1");
 
   let databaseClosed = false;
   let releaseDatabaseConnection = () => {};

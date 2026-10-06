@@ -9,11 +9,7 @@ import {
 } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 import { CurrentUser, PasswordHasher } from "@nestjs/authentication";
-import {
-  Controller,
-  Get,
-  type INestApplication,
-} from "@nestjs/common";
+import { Controller, Get, type INestApplication } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
@@ -186,6 +182,15 @@ describe("AuthenticationHttpController", () => {
     await systemUnderTest.thenNoUserIsStored();
   });
 
+  it("accepts a registration from the configured API origin", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+
+    await systemUnderTest.whenTheConfiguredWebsiteRegisters();
+
+    systemUnderTest.thenTheResponseHasStatus(200);
+    await systemUnderTest.thenThereIsOneUserAndCredential();
+  });
+
   it("preserves a legacy user and upgrades their password after sign-in", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.givenALegacyUser();
@@ -295,6 +300,12 @@ function createSystemUnderTest(application: INestApplication) {
     },
     whenAnotherWebsiteAttemptsToRegister: () =>
       signUp({}, "https://untrusted.example.com"),
+    whenTheConfiguredWebsiteRegisters() {
+      const origin = new URL(
+        application.get(ConfigService).getOrThrow<string>("API_BASE_URL"),
+      ).origin;
+      return signUp({}, origin);
+    },
     async whenTheCurrentSessionIsRequested() {
       const request = client.get("/api/auth/get-session");
       if (cookie) request.set("Cookie", cookie);
@@ -360,8 +371,12 @@ function createSystemUnderTest(application: INestApplication) {
       expect(response.headers["set-cookie"][0]).toMatch(/HttpOnly/i);
       const secure = application
         .get(ConfigService)
-        .getOrThrow<boolean>(IdentityAndAccessEnvironmentKeys.AUTH_COOKIE_SECURE);
-      expect(/(?:^|;\s*)Secure(?:;|$)/i.test(response.headers["set-cookie"][0])).toBe(secure);
+        .getOrThrow<boolean>(
+          IdentityAndAccessEnvironmentKeys.AUTH_COOKIE_SECURE,
+        );
+      expect(
+        /(?:^|;\s*)Secure(?:;|$)/i.test(response.headers["set-cookie"][0]),
+      ).toBe(secure);
       expect(response.headers["set-cookie"][0]).toMatch(/SameSite=Lax/i);
       expect(response.body.token).toBeNull();
     },
@@ -471,7 +486,7 @@ async function createAuthenticationTestApplication() {
   application.useLogger(false);
   configureHttpApplication(application);
   try {
-    await application.init();
+    await application.listen(0, "127.0.0.1");
     return application;
   } catch (error) {
     await application.close();

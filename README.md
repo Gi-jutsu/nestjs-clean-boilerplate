@@ -119,6 +119,7 @@ Explicit `HttpException` response extensions remain available. For example,
 Terminus health failures keep `info`, `error`, and `details`, while their root
 `status` becomes the numeric HTTP status 503. Query parameters and diagnostic
 `cause` or `stack` fields are excluded from the response.
+
 ### 🪪 Authentication
 
 Authentication uses `@nestjs/authentication` for password hashing, session cookies,
@@ -151,7 +152,9 @@ Deploy this change with a coordinated cutover: older Better Auth instances canno
 verify upgraded hashes, and a rollback needs a compatible password verifier.
 Legacy session and verification tables remain intact.
 
-Set `AUTH_COOKIE_SECURE=true` behind HTTPS; it defaults to `true`. The supplied
+Set `API_BASE_URL` to the public API origin, independently of the HTTP bind
+address. The Docker example uses `http://localhost:8080` while listening on
+`0.0.0.0`. Set `AUTH_COOKIE_SECURE=true` behind HTTPS; it defaults to `true`. The supplied
 local HTTP examples set it to `false`. Add any separate frontend origins to the
 comma-separated `AUTH_TRUSTED_ORIGINS` setting; `API_BASE_URL` is already trusted.
 MFA and refresh tokens are disabled through explicit stores that reject writes.
