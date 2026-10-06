@@ -126,8 +126,9 @@ TEST_DATABASE_URL=postgresql://localhost:5432/boilerplate_test pnpm test
 
 The test runner prepares the current schema in that disposable database without
 reading or changing your application migration files. It refuses schema changes
-that may lose data. The database role needs `CREATEDB`: migration scenarios create
-and remove their own temporary databases. Test applications use
+that may lose data. Tests protect the boilerplate's adapters, configuration,
+and application policies; package internals stay covered by their maintainers.
+Test applications use
 `@nestjs/testing` and the production HTTP configuration, and close with
 `app.close()` so Nest lifecycle hooks run. Integration scenarios use flat
 `given…`, `when…`, and `then…` methods; their factory owns fixtures, HTTP requests,

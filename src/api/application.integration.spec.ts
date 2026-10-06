@@ -1,7 +1,7 @@
 import type { INestApplication } from "@nestjs/common";
 import { createTestingApplication } from "../../specs/testing-application.js";
 import supertest, { type Response } from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
 
 const REQUEST_LIMIT = 100;
 const CORRELATION_ID = "request-from-client";
@@ -44,10 +44,7 @@ describe("ApplicationModule HTTP configuration", () => {
 
   beforeEach(async () => {
     application = await createTestingApplication();
-  });
-
-  afterEach(async () => {
-    await application.close();
+    onTestFinished(() => application.close());
   });
 });
 

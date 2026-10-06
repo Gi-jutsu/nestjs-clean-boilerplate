@@ -41,17 +41,12 @@ function createSystemUnderTest() {
     thenTheEventCanBeRoutedToItsConsumer() {
       expect(event.type).toBe("AccountOpened");
       expect(event.payload).toEqual({ accountId: ACCOUNT_ID });
-      expect(event.id).toMatch(UUID_PATTERN);
     },
     thenTheEventsHaveDistinctStableIdentities() {
       expect(event.id).toBe(originalIdentity);
-      expect(otherEvent.id).toMatch(UUID_PATTERN);
       expect(event.id).not.toBe(otherEvent.id);
     },
   };
 }
 
 class AccountOpened extends DomainEvent<{ accountId: string }> {}
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

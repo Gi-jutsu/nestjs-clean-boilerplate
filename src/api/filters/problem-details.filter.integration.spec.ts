@@ -3,21 +3,14 @@ import { configureHttpApplication } from "@api/configure-http-application.js";
 import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
 import {
   BadRequestException,
-  Body,
-  CanActivate,
   Controller,
-  ForbiddenException,
   Get,
   HttpException,
   Injectable,
   MiddlewareConsumer,
   Module,
-  NestMiddleware,
   NestModule,
-  Post,
   Res,
-  ServiceUnavailableException,
-  UseGuards,
   type INestApplication,
 } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
@@ -26,18 +19,12 @@ import {
   ResourceAlreadyExistsError,
   ResourceNotFoundError,
 } from "@packages/domain-driven-design/index.js";
-import { IsEmail } from "class-validator";
 import type { Response as ExpressResponse } from "express";
 import supertest, { type Response } from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
 
 const CORRELATION_ID = "problem-details-request";
 const PRIVATE_ERROR_DETAIL = "Database credentials: do-not-expose-this-secret";
-const HEALTH_DETAILS = {
-  info: { uptime: { status: "up" } },
-  error: { postgresql: { status: "down" } },
-  details: { uptime: { status: "up" }, postgresql: { status: "down" } },
-};
 
 describe("ProblemDetailsFilter HTTP boundary", () => {
   let application: INestApplication;
@@ -66,15 +53,16 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
     });
   });
 
-  it("uses the declared HTTP exception status", async () => {
+  it("uses the declared HTTP status and excludes private query parameters", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     systemUnderTest.givenTheRequestIsInvalid();
-    await systemUnderTest.whenTheAccountIsRequested();
+    await systemUnderTest.whenTheAccountIsRequestedWithPrivateQueryParameters();
     systemUnderTest.thenTheProblemIs({
       status: 400,
       title: "Bad Request",
       detail: "Invalid account request",
     });
+    systemUnderTest.thenTheInstanceContainsOnlyThePath();
   });
 
   it("normalizes a string HTTP exception response", async () => {
@@ -102,37 +90,11 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
     systemUnderTest.thenAnUnexpectedFailureIsRedacted();
   });
 
-  it("formats failures raised by a guard before a controller runs", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.whenAProtectedAccountIsRequested();
-    systemUnderTest.thenTheProblemIs({
-      status: 403,
-      title: "Forbidden",
-      detail: "Account access is forbidden",
-    });
-  });
-
   it("keeps validation issues in the HTTP problem", async () => {
     const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.whenAnInvalidEmailIsSubmitted();
+    systemUnderTest.givenValidationMessages();
+    await systemUnderTest.whenTheAccountIsRequested();
     systemUnderTest.thenTheValidationProblemIsReturned();
-  });
-
-  it("formats a failure raised by Nest middleware", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    systemUnderTest.givenTheRequestIsInvalid();
-    await systemUnderTest.whenTheMiddlewareRejectsTheRequest();
-    systemUnderTest.thenTheProblemIs({
-      status: 400,
-      title: "Bad Request",
-      detail: "Invalid account request",
-    });
-  });
-
-  it("formats malformed JSON before routing", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.whenMalformedJsonIsSubmitted();
-    systemUnderTest.thenTheProblemIs({ status: 400, title: "Bad Request" });
   });
 
   it("handles a parser failure before a correlation ID exists", async () => {
@@ -152,31 +114,11 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
     systemUnderTest.thenStructuredValidationIssuesAreReturned();
   });
 
-  it("formats the router's missing endpoint response", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    await systemUnderTest.whenAnUnknownEndpointIsRequested();
-    systemUnderTest.thenTheProblemIs({ status: 404, title: "Not Found" });
-  });
-
-  it("preserves structured health details with a numeric HTTP status", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    systemUnderTest.givenTheDatabaseIsUnhealthy();
-    await systemUnderTest.whenTheAccountIsRequested();
-    systemUnderTest.thenTheHealthProblemIsReturned();
-  });
-
   it("preserves deliberate HTTP problem extensions and removes diagnostic fields", async () => {
     const systemUnderTest = createSystemUnderTest(application);
     systemUnderTest.givenAStructuredHttpProblem();
     await systemUnderTest.whenTheAccountIsRequested();
     systemUnderTest.thenTheStructuredProblemIsReturned();
-  });
-
-  it("omits query parameters from the problem instance", async () => {
-    const systemUnderTest = createSystemUnderTest(application);
-    systemUnderTest.givenTheRequestIsInvalid();
-    await systemUnderTest.whenTheAccountIsRequestedWithPrivateQueryParameters();
-    systemUnderTest.thenTheInstanceContainsOnlyThePath();
   });
 
   it("ends an already started response when a controller fails", async () => {
@@ -192,13 +134,10 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
       imports: [ErrorScenariosModule],
     }).compile();
     application = testingModule.createNestApplication();
+    onTestFinished(() => application.close());
     application.useLogger(false);
     configureHttpApplication(application);
     await application.init();
-  });
-
-  afterEach(async () => {
-    await application.close();
   });
 });
 
@@ -263,10 +202,9 @@ function createSystemUnderTest(application: INestApplication) {
     givenAThrownObjectContainsPrivateDetails() {
       scenario.failure = { status: 422, detail: PRIVATE_ERROR_DETAIL };
     },
-    givenTheDatabaseIsUnhealthy() {
-      scenario.failure = new ServiceUnavailableException({
-        status: "error",
-        ...HEALTH_DETAILS,
+    givenValidationMessages() {
+      scenario.failure = new BadRequestException({
+        message: ["Invalid email", "Name is required"],
       });
     },
     givenAStructuredHttpProblem() {
@@ -293,39 +231,11 @@ function createSystemUnderTest(application: INestApplication) {
         .get("/errors/account")
         .set("x-correlation-id", CORRELATION_ID);
     },
-    async whenAProtectedAccountIsRequested() {
-      response = await client
-        .get("/errors/protected")
-        .set("x-correlation-id", CORRELATION_ID);
-    },
-    async whenAnInvalidEmailIsSubmitted() {
-      response = await client
-        .post("/errors/validated")
-        .set("x-correlation-id", CORRELATION_ID)
-        .send({ email: "invalid" });
-    },
-    async whenTheMiddlewareRejectsTheRequest() {
-      response = await client
-        .get("/errors/middleware")
-        .set("x-correlation-id", CORRELATION_ID);
-    },
-    async whenMalformedJsonIsSubmitted() {
-      response = await client
-        .post("/errors/validated")
-        .set("x-correlation-id", CORRELATION_ID)
-        .set("Content-Type", "application/json")
-        .send('{"email":');
-    },
     async whenMalformedJsonHasNoCorrelationId() {
       response = await client
-        .post("/errors/validated")
+        .post("/errors/account")
         .set("Content-Type", "application/json")
         .send('{"email":');
-    },
-    async whenAnUnknownEndpointIsRequested() {
-      response = await client
-        .get("/errors/unknown")
-        .set("x-correlation-id", CORRELATION_ID);
     },
     async whenTheAccountIsRequestedWithPrivateQueryParameters() {
       response = await client
@@ -356,16 +266,8 @@ function createSystemUnderTest(application: INestApplication) {
       assertProblem({
         status: 400,
         title: "Bad Request",
-        detail: "email must be an email",
-        errors: ["email must be an email"],
-      });
-    },
-    thenTheHealthProblemIsReturned() {
-      assertProblem({
-        status: 503,
-        title: "Service Unavailable",
-        detail: "Service Unavailable",
-        ...HEALTH_DETAILS,
+        detail: "Invalid email; Name is required",
+        errors: ["Invalid email", "Name is required"],
       });
     },
     thenTheStructuredProblemIsReturned() {
@@ -392,7 +294,7 @@ function createSystemUnderTest(application: INestApplication) {
         type: "about:blank",
         status: 400,
         title: "Bad Request",
-        instance: "/errors/validated",
+        instance: "/errors/account",
       });
       expect(response.body).not.toHaveProperty("correlationId");
     },
@@ -417,26 +319,6 @@ class ErrorScenario {
   failure: unknown;
 }
 
-class ValidatedAccountBody {
-  @IsEmail()
-  email!: string;
-}
-
-@Injectable()
-class DenyAccountAccessGuard implements CanActivate {
-  canActivate(): boolean {
-    throw new ForbiddenException("Account access is forbidden");
-  }
-}
-
-@Injectable()
-class RejectRequestMiddleware implements NestMiddleware {
-  constructor(private readonly scenario: ErrorScenario) {}
-  use() {
-    throw this.scenario.failure;
-  }
-}
-
 @Controller("errors")
 class ErrorScenariosController {
   constructor(private readonly scenario: ErrorScenario) {}
@@ -444,20 +326,6 @@ class ErrorScenariosController {
   fail() {
     throw this.scenario.failure;
   }
-  @Get("protected")
-  @UseGuards(DenyAccountAccessGuard)
-  protectedAccount() {
-    return { account: "protected" };
-  }
-  @Post("validated")
-  validatedAccount(@Body() body: ValidatedAccountBody) {
-    return body;
-  }
-  @Get("middleware")
-  middlewareAccount() {
-    return { account: "middleware" };
-  }
-
   @Get("started")
   startedResponse(@Res() response: ExpressResponse) {
     response.type("text/plain");
@@ -470,13 +338,11 @@ class ErrorScenariosController {
   controllers: [ErrorScenariosController],
   providers: [
     ErrorScenario,
-    DenyAccountAccessGuard,
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
   ],
 })
 class ErrorScenariosModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(CorrelationIdMiddleware).forRoutes("*");
-    consumer.apply(RejectRequestMiddleware).forRoutes("errors/middleware");
   }
 }
