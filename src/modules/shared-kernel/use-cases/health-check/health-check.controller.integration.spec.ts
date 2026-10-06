@@ -1,39 +1,126 @@
-import { bootstrap } from "@api/bootstrap.js";
-import { Server } from "http";
-import supertest from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ApplicationModule } from "@api/application.module.js";
+import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
+import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { Test } from "@nestjs/testing";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import supertest, { type Response } from "supertest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("HealthCheckHttpController", () => {
-  let server: Server;
+  let healthCheckApplication: Awaited<
+    ReturnType<typeof createTestingHealthCheckApplication>
+  >;
 
-  beforeAll(async () => {
-    server = await bootstrap();
+  it("reports a healthy PostgreSQL database without authentication", async () => {
+    const systemUnderTest = createSystemUnderTest(healthCheckApplication);
+
+    await systemUnderTest.whenTheHealthCheckIsRequested();
+
+    systemUnderTest.thenTheRequestHasStatus(200);
+    systemUnderTest.thenPostgreSQLIsHealthy();
   });
 
-  afterAll(() => {
-    server.close();
+  it("answers 503 when PostgreSQL is unavailable", async () => {
+    const systemUnderTest = createSystemUnderTest(healthCheckApplication);
+    await systemUnderTest.givenPostgreSQLIsUnavailable();
+
+    await systemUnderTest.whenTheHealthCheckIsRequested();
+
+    systemUnderTest.thenTheRequestHasStatus(503);
+    systemUnderTest.thenPostgreSQLIsUnavailable();
   });
 
-  // Based on https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check#name-releaseid
-  it("should ...", async () => {
-    const response = await supertest(server).get("/health-check");
-
-    expect(response.status).toEqual(200);
-    expect(response.body).toMatchObject({
-      status: "pass",
-      checks: {
-        postgresql: {
-          status: "pass",
-        },
-        uptime: [
-          {
-            componentType: "system",
-            observedValue: expect.any(Number), // Uptime is dynamic, so we use expect.any(Number)
-            observedUnit: "s",
-            status: "pass",
-          },
-        ],
-      },
-    });
+  beforeEach(async () => {
+    healthCheckApplication = await createTestingHealthCheckApplication();
   });
+
+  afterEach(() => healthCheckApplication.close());
 });
+
+function createSystemUnderTest(
+  healthCheckApplication: Awaited<
+    ReturnType<typeof createTestingHealthCheckApplication>
+  >,
+) {
+  let response: Response;
+
+  return {
+    givenPostgreSQLIsUnavailable() {
+      return healthCheckApplication.closeDatabase();
+    },
+
+    async whenTheHealthCheckIsRequested() {
+      response = await supertest(
+        healthCheckApplication.application.getHttpServer(),
+      ).get("/health-check");
+    },
+
+    thenTheRequestHasStatus(status: number) {
+      expect(response.status).toBe(status);
+    },
+
+    thenPostgreSQLIsHealthy() {
+      const postgresql = { status: "up", responseTime: expect.any(Number) };
+
+      expect(response.body).toEqual({
+        status: "ok",
+        info: { postgresql },
+        error: {},
+        details: { postgresql },
+      });
+    },
+
+    thenPostgreSQLIsUnavailable() {
+      const postgresql = expect.objectContaining({
+        status: "down",
+        responseTime: expect.any(Number),
+      });
+
+      expect(response.body).toEqual({
+        status: "error",
+        info: {},
+        error: { postgresql },
+        details: { postgresql },
+      });
+    },
+  };
+}
+
+async function createTestingHealthCheckApplication() {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const database = drizzle(pool, { schema: SharedKernelDatabaseSchema });
+  const testingModule = await Test.createTestingModule({
+    imports: [ApplicationModule],
+  })
+    .overrideProvider(SharedKernelDatabaseToken)
+    .useValue(database)
+    .compile();
+
+  const application = testingModule.createNestApplication({
+    bodyParser: false,
+    logger: false,
+  });
+  await application.init();
+
+  let databaseClosed = false;
+
+  async function closeDatabase() {
+    if (!databaseClosed && !pool.ended) {
+      databaseClosed = true;
+      await pool.end();
+    }
+  }
+
+  return {
+    application,
+    closeDatabase,
+    async close() {
+      try {
+        await application.close();
+      } finally {
+        await closeDatabase();
+      }
+    },
+  };
+}
