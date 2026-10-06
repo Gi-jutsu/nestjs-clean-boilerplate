@@ -1,35 +1,45 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { fromDrizzle, PostgresOutboxStore } from "@nestjs/outbox/postgres";
+import { pushSchema } from "drizzle-kit/api";
+import { getTableName } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
 export async function bootstrapPostgresSqlContainer() {
-  const postgreSqlContainer = await new PostgreSqlContainer(
-    "postgres:latest",
-  ).start();
-  process.env.DATABASE_URL = postgreSqlContainer.getConnectionUri();
+  const container = await new PostgreSqlContainer("postgres:latest").start();
+  process.env.DATABASE_URL = container.getConnectionUri();
   try {
-    await migratePostgresSqlDatabase(postgreSqlContainer.getConnectionUri());
+    await preparePostgresSqlDatabase(container.getConnectionUri());
   } catch (error) {
-    await postgreSqlContainer.stop();
+    await container.stop();
     throw error;
   }
-
-  return postgreSqlContainer;
+  return container;
 }
 
-export async function migratePostgresSqlDatabase(connectionString: string) {
+export async function preparePostgresSqlDatabase(connectionString: string) {
   const client = new pg.Client({ connectionString });
-  await client.connect();
-
   try {
-    await applySqlMigrations(client);
+    await client.connect();
+    const database = drizzle(client);
+    const preparation = await pushSchema(
+      SharedKernelDatabaseSchema,
+      database,
+      ["public"],
+      Object.values(SharedKernelDatabaseSchema).map(getTableName),
+    );
+    if (preparation.hasDataLoss || preparation.warnings.length > 0) {
+      throw new Error(
+        "Refusing test database schema changes that may lose data or require review.",
+      );
+    }
+    await preparation.apply();
+    await new PostgresOutboxStore({
+      executor: fromDrizzle(database),
+      migrate: false,
+    }).migrate();
   } finally {
     await client.end();
   }
-}
-
-async function applySqlMigrations(pg: pg.Client) {
-  const client = drizzle(pg);
-  await migrate(client, { migrationsFolder: "./drizzle" });
 }
