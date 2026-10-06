@@ -1,4 +1,5 @@
 import { ApplicationModule } from "@api/application.module.js";
+import { configureHttpApplication } from "@api/configure-http-application.js";
 import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
 import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 import { Test } from "@nestjs/testing";
@@ -101,6 +102,7 @@ async function createTestingHealthCheckApplication() {
     bodyParser: false,
     logger: false,
   });
+  configureHttpApplication(application);
   await application.init();
 
   let databaseClosed = false;

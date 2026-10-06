@@ -7,18 +7,26 @@ export async function bootstrapPostgresSqlContainer() {
   const postgreSqlContainer = await new PostgreSqlContainer(
     "postgres:latest",
   ).start();
-  const postgreSqlClient = new pg.Client({
-    connectionString: postgreSqlContainer.getConnectionUri(),
-  });
-
-  await postgreSqlClient.connect();
   process.env.DATABASE_URL = postgreSqlContainer.getConnectionUri();
-
-  await applySqlMigrations(postgreSqlClient);
-
-  await postgreSqlClient.end();
+  try {
+    await migratePostgresSqlDatabase(postgreSqlContainer.getConnectionUri());
+  } catch (error) {
+    await postgreSqlContainer.stop();
+    throw error;
+  }
 
   return postgreSqlContainer;
+}
+
+export async function migratePostgresSqlDatabase(connectionString: string) {
+  const client = new pg.Client({ connectionString });
+  await client.connect();
+
+  try {
+    await applySqlMigrations(client);
+  } finally {
+    await client.end();
+  }
 }
 
 async function applySqlMigrations(pg: pg.Client) {

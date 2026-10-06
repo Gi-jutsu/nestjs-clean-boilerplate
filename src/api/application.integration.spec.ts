@@ -1,42 +1,93 @@
-import { bootstrap } from "@api/bootstrap.js";
-import { Server } from "http";
-import supertest from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { INestApplication } from "@nestjs/common";
+import { createTestingApplication } from "../../specs/testing-application.js";
+import supertest, { type Response } from "supertest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-describe("ApplicationModule", () => {
-  let server: Server;
+const REQUEST_LIMIT = 100;
+const CORRELATION_ID = "request-from-client";
 
-  beforeAll(async () => {
-    server = await bootstrap();
+describe("ApplicationModule HTTP configuration", () => {
+  let application: INestApplication;
+
+  it("returns a correlation ID for a public request", async () => {
+    const system = createSystemUnderTest(application);
+
+    await system.whenHealthIsRequested();
+
+    system.thenACorrelationIdIsReturned();
   });
 
-  afterAll(async () => {
-    server.close();
+  it("preserves a client's correlation ID", async () => {
+    const system = createSystemUnderTest(application);
+    system.givenACorrelatedRequest();
+
+    await system.whenHealthIsRequested();
+
+    system.thenTheClientCorrelationIdIsReturned();
   });
 
-  describe("Correlation ID", () => {
-    it("should return the correlation ID in the response header", async () => {
-      const client = supertest(server);
+  it("applies security headers through the shared HTTP configuration", async () => {
+    const system = createSystemUnderTest(application);
 
-      const response = await client.get("/health-check");
+    await system.whenHealthIsRequested();
 
-      expect(response.header["x-correlation-id"]).toBeDefined();
-    });
+    system.thenSecurityHeadersAreReturned();
   });
 
-  describe("Rate Limiting", () => {
-    it("should return 429 after exceeding rate limit (100 requests per minute)", async () => {
-      const client = supertest(server);
-      const maximumNumberOfRequestsPerMinute = 100;
+  it("rejects only requests exceeding the per-minute limit", async () => {
+    const system = createSystemUnderTest(application);
 
-      const responses = await Promise.all(
-        Array.from({
-          length: maximumNumberOfRequestsPerMinute + 1,
-        }).map(() => client.get("/health-check")),
-      );
+    await system.whenTheRequestLimitIsExceeded();
 
-      const isLastResponse429 = responses[responses.length - 1].status === 429;
-      expect(isLastResponse429).toBe(true);
-    });
+    system.thenOnlyTheExcessRequestIsRejected();
+  });
+
+  beforeEach(async () => {
+    application = await createTestingApplication();
+  });
+
+  afterEach(async () => {
+    await application.close();
   });
 });
+
+function createSystemUnderTest(application: INestApplication) {
+  const client = supertest(application.getHttpServer());
+  let correlationId: string;
+  let response: Response;
+  let responses: Response[];
+
+  return {
+    givenACorrelatedRequest() {
+      correlationId = CORRELATION_ID;
+    },
+    async whenHealthIsRequested() {
+      const request = client.get("/health-check");
+      if (correlationId) request.set("x-correlation-id", correlationId);
+      response = await request;
+    },
+    async whenTheRequestLimitIsExceeded() {
+      responses = [];
+      for (let request = 0; request <= REQUEST_LIMIT; request++) {
+        responses.push(await client.get("/health-check"));
+      }
+    },
+    thenACorrelationIdIsReturned() {
+      expect(response.status).toBe(200);
+      expect(response.headers["x-correlation-id"]).toEqual(expect.any(String));
+    },
+    thenTheClientCorrelationIdIsReturned() {
+      expect(response.headers["x-correlation-id"]).toBe(CORRELATION_ID);
+    },
+    thenSecurityHeadersAreReturned() {
+      expect(response.headers["content-security-policy"]).toBeDefined();
+      expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    },
+    thenOnlyTheExcessRequestIsRejected() {
+      expect(responses.filter(({ status }) => status === 200)).toHaveLength(
+        REQUEST_LIMIT,
+      );
+      expect(responses.filter(({ status }) => status === 429)).toHaveLength(1);
+    },
+  };
+}

@@ -1,10 +1,9 @@
 import { ApplicationModule } from "@api/application.module.js";
+import { configureHttpApplication } from "@api/configure-http-application.js";
 import { ApiEnvironmentKeys } from "@api/environment.js";
-import { Logger, ValidationPipe } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
 
 export async function bootstrap() {
   const logger = new Logger("bootstrap");
@@ -15,9 +14,7 @@ export async function bootstrap() {
   });
 
   application.enableShutdownHooks();
-  application.use(cookieParser());
-  application.use(helmet());
-  application.useGlobalPipes(new ValidationPipe());
+  configureHttpApplication(application);
 
   const config = application.get(ConfigService);
   const host = config.getOrThrow(ApiEnvironmentKeys.API_HTTP_HOST);

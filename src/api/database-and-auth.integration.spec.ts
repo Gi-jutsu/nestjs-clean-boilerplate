@@ -1,4 +1,3 @@
-import { ApplicationModule } from "@api/application.module.js";
 import {
   accountSchema,
   sessionSchema,
@@ -7,12 +6,12 @@ import {
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
 import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
 import type { INestApplication } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { AuthService } from "@thallesp/nestjs-better-auth";
 import { eq, sql } from "drizzle-orm";
 import supertest, { type Response } from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createTestingApplication } from "../../specs/testing-application.js";
 
 const REGISTERED_USER = {
   email: "drizzle-user@example.com",
@@ -62,7 +61,7 @@ describe("ApplicationModule database and authentication", () => {
   });
 
   beforeEach(async () => {
-    application = await createApplication();
+    application = await createTestingApplication();
     const database = application.get<SharedKernelDatabase>(getDrizzleToken());
     await database.execute(
       sql`TRUNCATE TABLE "user", "session", "account", "verification" CASCADE`,
@@ -118,7 +117,7 @@ function createSystemUnderTest(application: INestApplication) {
     },
 
     async whenAnotherApplicationSurvivesTheFirstStopping() {
-      const otherApplication = await createApplication();
+      const otherApplication = await createTestingApplication();
       try {
         otherDatabase =
           otherApplication.get<SharedKernelDatabase>(getDrizzleToken());
@@ -205,13 +204,4 @@ function createSystemUnderTest(application: INestApplication) {
       );
     },
   };
-}
-
-async function createApplication() {
-  const application = await NestFactory.create(ApplicationModule, {
-    bodyParser: false,
-    logger: false,
-  });
-  await application.init();
-  return application;
 }
