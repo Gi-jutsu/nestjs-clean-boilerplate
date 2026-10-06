@@ -28,6 +28,7 @@ const USER = {
   password: "a-secure-password",
 };
 const LEGACY_PASSWORD = "café-Password-123";
+const OVERSIZED_NORMALIZED_PASSWORD = "\uFDFA".repeat(128);
 const LEGACY_PASSWORD_HASH =
   "2d8361dcc1b5ce89a168f04fc4c3ea59:8796e28950e3bf5f130c07d59fe0180030621ee8df901175083a8efe2ced807e51427b657156a8febef39e84f01dc622cf7f34738e5d75c2674f04b77fc4e636";
 
@@ -84,6 +85,27 @@ describe("AuthenticationHttpController", () => {
       await systemUnderTest.thenNoUserIsStored();
     },
   );
+
+  it("refuses a sign-up password that exceeds the normalized byte limit", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.whenTheUserSignsUp({
+      password: OVERSIZED_NORMALIZED_PASSWORD,
+    });
+    systemUnderTest.thenTheResponseHasStatus(400);
+    await systemUnderTest.thenNoUserIsStored();
+    await systemUnderTest.thenNoSessionIsStored();
+  });
+
+  it("refuses a sign-in password that exceeds the normalized byte limit", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.givenARegisteredUser();
+    await systemUnderTest.whenTheUserSignsIn(
+      USER.email,
+      OVERSIZED_NORMALIZED_PASSWORD,
+    );
+    systemUnderTest.thenTheResponseHasStatus(400);
+    await systemUnderTest.thenThereIsOneSession();
+  });
 
   it("refuses duplicate email addresses", async () => {
     const systemUnderTest = createSystemUnderTest(application);
