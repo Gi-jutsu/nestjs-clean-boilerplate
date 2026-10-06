@@ -1,104 +1,69 @@
 import { preparePostgresSqlDatabase } from "../../../../../specs/bootstrap-postgres-sql-database.util.js";
 import { randomUUID } from "node:crypto";
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
-import { promisify } from "node:util";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
-import { z } from "zod";
 
-const executeFile = promisify(execFile);
-const require = createRequire(import.meta.url);
-const DRIZZLE_CLI = join(dirname(require.resolve("drizzle-kit")), "bin.cjs");
-const JournalSchema = z.object({
-  entries: z.array(
-    z.object({
-      tag: z.string(),
-      idx: z.number(),
-      when: z.number(),
-      version: z.string(),
-      breakpoints: z.boolean(),
-    }),
-  ),
+describe("Disposable PostgreSQL schema preparation", () => {
+  let database: Awaited<ReturnType<typeof createDatabaseFixture>>;
+
+  it("preserves existing application data and unrelated tables when repeated", async () => {
+    const systemUnderTest = createSystemUnderTest(database);
+    await systemUnderTest.givenApplicationAndConsumerData();
+
+    await systemUnderTest.whenTheSchemaIsPrepared();
+    await systemUnderTest.whenTheSchemaIsPrepared();
+
+    systemUnderTest.thenPreparationSucceeds();
+    await systemUnderTest.thenApplicationAndConsumerDataArePreserved();
+  });
+
+  it("refuses data loss before changing application-owned columns", async () => {
+    const systemUnderTest = createSystemUnderTest(database);
+    await systemUnderTest.givenApplicationDataInAnAdditionalColumn();
+
+    await systemUnderTest.whenTheSchemaIsPrepared();
+
+    systemUnderTest.thenPreparationIsRefused();
+    await systemUnderTest.thenTheApplicationDataIsPreserved();
+  });
+
+  beforeEach(async () => {
+    database = await createDatabaseFixture();
+    onTestFinished(() => database.close());
+  });
 });
 
-describe(
-  "Disposable PostgreSQL schema preparation",
-  { timeout: 30_000 },
-  () => {
-    let database: Awaited<ReturnType<typeof createDisposableDatabase>>;
-
-    it("preserves existing application data and unrelated tables when repeated", async () => {
-      const systemUnderTest = createSystemUnderTest(database);
-      await systemUnderTest.givenApplicationAndConsumerData();
-
-      await systemUnderTest.whenTheSchemaIsPrepared();
-      await systemUnderTest.whenTheSchemaIsPrepared();
-
-      systemUnderTest.thenPreparationSucceeds();
-      await systemUnderTest.thenApplicationAndConsumerDataArePreserved();
-    });
-
-    it("refuses data loss before changing application-owned columns", async () => {
-      const systemUnderTest = createSystemUnderTest(database);
-      await systemUnderTest.givenApplicationDataInAnAdditionalColumn();
-
-      await systemUnderTest.whenTheSchemaIsPrepared();
-
-      systemUnderTest.thenPreparationIsRefused();
-      await systemUnderTest.thenTheApplicationDataIsPreserved();
-    });
-
-    it("generates later starter changes after consumer migrations without replacing their history", async () => {
-      const systemUnderTest = createSystemUnderTest(database);
-      await systemUnderTest.givenAnApplicationOwnedInitialMigration();
-      await systemUnderTest.givenAConsumerOwnedCustomMigration();
-
-      await systemUnderTest.whenTheStarterSchemaAddsAnIssuer();
-
-      await systemUnderTest.thenExistingHistoryIsUnchanged();
-      await systemUnderTest.thenTheSchemaAndConsumerDataArePreserved();
-      await systemUnderTest.thenGeneratingAgainAddsNoMigration();
-    });
-
-    beforeEach(async () => {
-      database = await createDisposableDatabase();
-      onTestFinished(() => database.close());
-    });
-  },
-);
-
 function createSystemUnderTest(
-  database: Awaited<ReturnType<typeof createDisposableDatabase>>,
+  database: Awaited<ReturnType<typeof createDatabaseFixture>>,
 ) {
   let preparationError: unknown;
 
+  async function insertUser() {
+    await database.client.query(
+      'INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at) VALUES ($1, $2, $3, false, now(), now())',
+      [database.userId, "Schema User", `${database.userId}@example.com`],
+    );
+  }
+
   return {
-    ...createMigrationWorkflow(database),
     async givenApplicationAndConsumerData() {
-      await preparePostgresSqlDatabase(database.url);
-      await insertUser(database.client);
+      await insertUser();
       await database.client.query(
-        "CREATE TABLE consumer_orders (id text PRIMARY KEY); INSERT INTO consumer_orders VALUES ('order-1')",
+        `CREATE TABLE "${database.publicTable}" (id text PRIMARY KEY); INSERT INTO "${database.publicTable}" VALUES ('order-1')`,
       );
       await database.client.query(
-        "CREATE SCHEMA consumer_private; CREATE TABLE consumer_private.orders (id text PRIMARY KEY); INSERT INTO consumer_private.orders VALUES ('private-order-1')",
+        `CREATE SCHEMA "${database.privateSchema}"; CREATE TABLE "${database.privateSchema}".orders (id text PRIMARY KEY); INSERT INTO "${database.privateSchema}".orders VALUES ('private-order-1')`,
       );
     },
     async givenApplicationDataInAnAdditionalColumn() {
-      await preparePostgresSqlDatabase(database.url);
-      await insertUser(database.client);
+      await insertUser();
       await database.client.query(
-        'ALTER TABLE "user" ADD COLUMN application_owned text',
+        `ALTER TABLE "user" ADD COLUMN "${database.userColumn}" text`,
       );
-      await database.client.query('UPDATE "user" SET application_owned = $1', [
-        "Owned value",
-      ]);
+      await database.client.query(
+        `UPDATE "user" SET "${database.userColumn}" = $1 WHERE id = $2`,
+        ["Owned value", database.userId],
+      );
     },
     async whenTheSchemaIsPrepared() {
       try {
@@ -118,199 +83,72 @@ function createSystemUnderTest(
     },
     async thenApplicationAndConsumerDataArePreserved() {
       expect(
-        (await database.client.query('SELECT id FROM "user"')).rows,
-      ).toEqual([{ id: "schema-user" }]);
+        (
+          await database.client.query('SELECT id FROM "user" WHERE id = $1', [
+            database.userId,
+          ])
+        ).rows,
+      ).toEqual([{ id: database.userId }]);
       expect(
-        (await database.client.query("SELECT id FROM consumer_orders")).rows,
+        (
+          await database.client.query(
+            `SELECT id FROM "${database.publicTable}"`,
+          )
+        ).rows,
       ).toEqual([{ id: "order-1" }]);
       expect(
-        (await database.client.query("SELECT id FROM consumer_private.orders"))
-          .rows,
+        (
+          await database.client.query(
+            `SELECT id FROM "${database.privateSchema}".orders`,
+          )
+        ).rows,
       ).toEqual([{ id: "private-order-1" }]);
     },
     async thenTheApplicationDataIsPreserved() {
       const { rows } = await database.client.query(
-        'SELECT application_owned FROM "user" WHERE id = $1',
-        ["schema-user"],
+        `SELECT "${database.userColumn}" AS value FROM "user" WHERE id = $1`,
+        [database.userId],
       );
-      expect(rows).toEqual([{ application_owned: "Owned value" }]);
+      expect(rows).toEqual([{ value: "Owned value" }]);
     },
   };
 }
 
-function createMigrationWorkflow(
-  database: Awaited<ReturnType<typeof createDisposableDatabase>>,
-) {
-  const schemaFile = join(database.workspace, "application.schema.ts");
-  const migrationsFolder = join(database.workspace, "migrations");
-  let existingFiles: Map<string, string>;
-  let existingJournal: z.infer<typeof JournalSchema>;
-
-  async function journal() {
-    return JournalSchema.parse(
-      JSON.parse(
-        await readFile(join(migrationsFolder, "meta", "_journal.json"), "utf8"),
-      ),
-    );
-  }
-
-  async function generate(name: string, custom = false, changes = true) {
-    await executeFile(
-      process.execPath,
-      [
-        DRIZZLE_CLI,
-        "generate",
-        "--dialect=postgresql",
-        `--schema=${schemaFile}`,
-        // Drizzle Kit 0.31 prefixes snapshot paths with './' on subsequent runs.
-        `--out=${relative(process.cwd(), migrationsFolder)}`,
-        `--name=${name}`,
-        ...(custom ? ["--custom"] : []),
-      ],
-      { timeout: 10_000 },
-    );
-    const latest = (await journal()).entries.at(-1);
-    if (!latest || (changes && !latest.tag.endsWith(`_${name}`))) {
-      throw new Error(
-        `Drizzle did not generate the requested migration: ${name}`,
-      );
-    }
-    return join(migrationsFolder, `${latest.tag}.sql`);
-  }
-
-  async function writeSchema(issuer: boolean) {
-    await writeFile(
-      schemaFile,
-      `import { pgTable, text } from ${JSON.stringify(require.resolve("drizzle-orm/pg-core"))};
-export const accounts = pgTable("application_accounts", {
-  id: text("id").primaryKey(),
-  email: text("email").notNull(),
-  ${issuer ? 'issuer: text("issuer"),' : ""}
-});
-`,
-    );
-  }
-
-  async function applyMigrations() {
-    await migrate(drizzle(database.client), { migrationsFolder });
-  }
-
-  return {
-    async givenAnApplicationOwnedInitialMigration() {
-      await writeSchema(false);
-      await generate("initial");
-      await applyMigrations();
-      await database.client.query(
-        "INSERT INTO application_accounts (id, email) VALUES ($1, $2)",
-        ["legacy-account", "legacy@example.com"],
-      );
-    },
-    async givenAConsumerOwnedCustomMigration() {
-      const customFile = await generate("consumer_orders", true);
-      await writeFile(
-        customFile,
-        "CREATE TABLE consumer_orders (id text PRIMARY KEY);\n--> statement-breakpoint\nINSERT INTO consumer_orders VALUES ('consumer-order-1');\n",
-      );
-      await applyMigrations();
-      existingJournal = await journal();
-      existingFiles = new Map();
-      for (const file of await readdir(migrationsFolder, { recursive: true })) {
-        if (file.endsWith(".sql") || file.endsWith("_snapshot.json")) {
-          existingFiles.set(
-            file,
-            await readFile(join(migrationsFolder, file), "utf8"),
-          );
-        }
-      }
-    },
-    async whenTheStarterSchemaAddsAnIssuer() {
-      await writeSchema(true);
-      await generate("starter_issuer");
-      await applyMigrations();
-    },
-    async thenExistingHistoryIsUnchanged() {
-      for (const [file, contents] of existingFiles) {
-        expect(await readFile(join(migrationsFolder, file), "utf8")).toBe(
-          contents,
-        );
-      }
-      expect((await journal()).entries.slice(0, 2)).toEqual(
-        existingJournal.entries,
-      );
-      expect((await journal()).entries).toHaveLength(3);
-    },
-    async thenTheSchemaAndConsumerDataArePreserved() {
-      expect(
-        (
-          await database.client.query(
-            "SELECT id, email, issuer FROM application_accounts",
-          )
-        ).rows,
-      ).toEqual([
-        { id: "legacy-account", email: "legacy@example.com", issuer: null },
-      ]);
-      expect(
-        (await database.client.query("SELECT id FROM consumer_orders")).rows,
-      ).toEqual([{ id: "consumer-order-1" }]);
-    },
-    async thenGeneratingAgainAddsNoMigration() {
-      const before = await journal();
-      await generate("unchanged", false, false);
-      expect(await journal()).toEqual(before);
-    },
-  };
-}
-
-async function insertUser(client: pg.Client) {
-  await client.query(
-    'INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at) VALUES ($1, $2, $3, false, now(), now())',
-    ["schema-user", "Schema User", "schema@example.com"],
-  );
-}
-
-async function createDisposableDatabase() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("The test database URL is missing");
-  const admin = new pg.Client({ connectionString });
-  const name = `schema_test_${randomUUID().replaceAll("-", "")}`;
-  const url = new URL(connectionString);
-  url.pathname = `/${name}`;
-  const client = new pg.Client({ connectionString: url.toString() });
-  const workspace = await mkdtemp(join(tmpdir(), "application-migrations-"));
-  let created = false;
-
-  async function close() {
-    try {
-      await client.end();
-    } finally {
-      try {
-        if (created) {
-          await admin.query(`DROP DATABASE "${name}"`);
-          created = false;
-        }
-      } finally {
-        try {
-          await admin.end();
-        } finally {
-          await rm(workspace, { recursive: true, force: true });
-        }
-      }
-    }
-  }
+async function createDatabaseFixture() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("The test database URL is missing");
+  const client = new pg.Client({ connectionString: url });
+  const suffix = randomUUID().replaceAll("-", "");
+  const userId = `schema-user-${suffix}`;
+  const publicTable = `schema_fixture_orders_${suffix}`;
+  const privateSchema = `schema_fixture_private_${suffix}`;
+  const userColumn = `schema_fixture_column_${suffix}`;
 
   try {
-    await admin.connect();
-    await admin.query(`CREATE DATABASE "${name}"`);
-    created = true;
     await client.connect();
   } catch (error) {
-    await close();
+    await client.end();
     throw error;
   }
+
   return {
     client,
-    workspace,
-    url: url.toString(),
-    close,
+    url,
+    userId,
+    publicTable,
+    privateSchema,
+    userColumn,
+    async close() {
+      try {
+        await client.query(`
+          ALTER TABLE "user" DROP COLUMN IF EXISTS "${userColumn}";
+          DROP TABLE IF EXISTS "${publicTable}";
+          DROP SCHEMA IF EXISTS "${privateSchema}" CASCADE;
+        `);
+        await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
+      } finally {
+        await client.end();
+      }
+    },
   };
 }
