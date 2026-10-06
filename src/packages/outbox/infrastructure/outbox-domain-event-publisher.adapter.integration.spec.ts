@@ -94,9 +94,14 @@ describe("OutboxDomainEventPublisher with PostgreSQL", () => {
   });
 
   afterAll(async () => {
-    await database.execute(sql`TRUNCATE nest_outbox.messages RESTART IDENTITY`);
-    await database.execute(sql`DROP TABLE outbox_test_orders`);
-    await application.close();
+    try {
+      await database.execute(
+        sql`TRUNCATE nest_outbox.messages RESTART IDENTITY`,
+      );
+      await database.execute(sql`DROP TABLE outbox_test_orders`);
+    } finally {
+      await application.close();
+    }
   });
 });
 
