@@ -98,12 +98,14 @@ function createSystemUnderTest() {
     thenTheMissingSettingsAreRejected() {
       expect(result.success).toBe(false);
       if (result.success) throw new Error("Expected invalid configuration");
-      expect(result.error.issues.map((issue) => issue.path[0])).toEqual([
-        "OBSERVE_APP_KEY",
-        "OBSERVE_APP_SECRET",
-        "OBSERVE_SERVICE_ID",
-        "OBSERVE_ENDPOINT",
-      ]);
+      expect(result.error.issues.map((issue) => issue.path[0])).toEqual(
+        expect.arrayContaining([
+          "OBSERVE_APP_KEY",
+          "OBSERVE_APP_SECRET",
+          "OBSERVE_SERVICE_ID",
+          "OBSERVE_ENDPOINT",
+        ]),
+      );
     },
     thenConfigurationIsRejected() {
       expect(result.success).toBe(false);

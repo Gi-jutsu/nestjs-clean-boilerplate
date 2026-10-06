@@ -4,87 +4,233 @@ import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure
 import type {
   MfaStore,
   RefreshTokenStore,
-  SessionStore,
+  SessionRecord,
 } from "@nestjs/authentication";
-import {
-  authenticationStoreContract,
-  type AuthenticationStoreContractCase,
-} from "@nestjs/authentication/testing";
 import type { INestApplication } from "@nestjs/common";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test } from "@nestjs/testing";
 import { sql } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
 import { DisabledAuthenticationFeaturesStore } from "./disabled-authentication-features.store.js";
 import { DrizzleSessionStore } from "./drizzle-session.store.js";
 
+const SESSION: SessionRecord = {
+  id: "session-with-metadata",
+  userId: "session-user",
+  createdAt: new Date("2020-01-01T00:00:00Z"),
+  expiresAt: new Date("2020-01-08T00:00:00Z"),
+  lastActiveAt: new Date("2020-01-01T00:00:00Z"),
+  mfa: "pending",
+  metadata: {
+    device: "O'Reilly ü",
+    tags: ["browser", 1],
+    nested: { active: true },
+  },
+};
+const BARE_SESSION: SessionRecord = {
+  id: "session-without-metadata",
+  userId: SESSION.userId,
+  createdAt: SESSION.createdAt,
+  expiresAt: SESSION.expiresAt,
+  lastActiveAt: SESSION.lastActiveAt,
+};
+const OTHER_SESSION: SessionRecord = {
+  ...BARE_SESSION,
+  id: "other-session",
+  userId: "other-user",
+};
+const LATEST_ACTIVITY = new Date("2020-01-02T00:00:00Z");
+
 describe("DrizzleSessionStore", () => {
   let application: INestApplication;
-  let database: SharedKernelDatabase;
 
-  const contractCases = authenticationStoreContract(
-    async () => {
-      const store = application.get(DrizzleSessionStore);
-      // The package generates arbitrary user ids; seed the real foreign-key target.
-      const sessions: SessionStore = {
-        getSession: store.getSession.bind(store),
-        touchSession: store.touchSession.bind(store),
-        deleteSession: store.deleteSession.bind(store),
-        listUserSessions: store.listUserSessions.bind(store),
-        deleteUserSessions: store.deleteUserSessions.bind(store),
-        async createSession(record) {
-          await database
-            .insert(userSchema)
-            .values({
-              id: record.userId,
-              name: "Contract User",
-              email: `${record.userId}@example.com`,
-            })
-            .onConflictDoNothing();
-          await store.createSession(record);
-        },
-      };
-      return { sessions };
-    },
-    { contracts: ["sessions"], concurrent: true },
-  );
+  it("restores dates and JSON while omitting absent optional fields", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.givenSessionsWithAndWithoutMetadata();
 
-  for (const contractCase of contractCases) {
-    it(contractCase.name, async () => {
-      const systemUnderTest = createSystemUnderTest(contractCase);
-      await systemUnderTest.thenTheStoreSatisfiesItsContract();
-    });
-  }
+    await systemUnderTest.whenTheSessionsAreRead();
+
+    await systemUnderTest.thenTheStoredFieldsAreRestored();
+  });
+
+  it("lists and revokes one user's sessions without affecting another user", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.givenSessionsBelongingToDifferentUsers();
+
+    await systemUnderTest.whenTheUserSessionsAreRevoked();
+
+    await systemUnderTest.thenOnlyTheSelectedUserSessionsAreRevoked();
+  });
+
+  it("keeps activity monotonic during concurrent touches and cannot recreate a deleted session", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.givenASessionAndAnotherUsersSession();
+
+    await systemUnderTest.whenConcurrentRequestsTouchTheSession();
+
+    await systemUnderTest.thenOnlyTheLatestActivityIsChanged();
+
+    await systemUnderTest.whenTheDeletedSessionIsTouched();
+
+    await systemUnderTest.thenTheSessionRemainsDeleted();
+  });
+
+  it("reports exactly one successful deletion when requests race", async () => {
+    const systemUnderTest = createSystemUnderTest(application);
+    await systemUnderTest.givenASessionAndAnotherUsersSession();
+
+    await systemUnderTest.whenRequestsDeleteTheSessionConcurrently();
+
+    await systemUnderTest.thenOnlyOneDeletionSucceeds();
+  });
 
   it("keeps unused authentication features empty and rejects their writes", async () => {
-    const systemUnderTest = createDisabledFeaturesSystemUnderTest(application);
+    const systemUnderTest = createSystemUnderTest(application);
     await systemUnderTest.thenDisabledFeaturesContainNoCredentials();
     await systemUnderTest.thenDisabledFeatureWritesAreRefused();
   });
 
-  beforeAll(async () => {
-    const testingModule = await Test.createTestingModule({
-      imports: [ApplicationModule],
-    }).compile();
-    application = testingModule.createNestApplication();
-    application.useLogger(false);
-    await application.init();
-    database = application.get(getDrizzleToken());
+  beforeEach(async () => {
+    application = await createSessionStoreTestApplication();
+    onTestFinished(() => application.close());
+    await application
+      .get<SharedKernelDatabase>(getDrizzleToken())
+      .execute(sql`TRUNCATE TABLE "user", "authentication_session" CASCADE`);
   });
-  beforeEach(() =>
-    database.execute(
-      sql`TRUNCATE TABLE "user", "authentication_session" CASCADE`,
-    ),
-  );
-  afterAll(() => application.close());
 });
 
-function createSystemUnderTest(contractCase: AuthenticationStoreContractCase) {
+function createSystemUnderTest(application: INestApplication) {
+  const database = application.get<SharedKernelDatabase>(getDrizzleToken());
+  const store = application.get(DrizzleSessionStore);
+  let restoredSessions: (SessionRecord | undefined)[];
+  let listedSessions: SessionRecord[];
+  let deletionResults: boolean[];
+
+  async function createSessions(...records: SessionRecord[]) {
+    for (const record of records) {
+      await database
+        .insert(userSchema)
+        .values({
+          id: record.userId,
+          name: "Session User",
+          email: `${record.userId}@example.com`,
+        })
+        .onConflictDoNothing();
+      await store.createSession(record);
+    }
+  }
+
   return {
-    async thenTheStoreSatisfiesItsContract() {
-      await contractCase.run();
+    ...createDisabledFeaturesSystemUnderTest(application),
+    givenASessionAndAnotherUsersSession: () =>
+      createSessions(SESSION, OTHER_SESSION),
+    givenSessionsWithAndWithoutMetadata: () =>
+      createSessions(SESSION, BARE_SESSION),
+    givenSessionsBelongingToDifferentUsers: () =>
+      createSessions(SESSION, BARE_SESSION, OTHER_SESSION),
+    async whenTheSessionsAreRead() {
+      restoredSessions = await Promise.all([
+        store.getSession(SESSION.id),
+        store.getSession(BARE_SESSION.id),
+        store.getSession("missing-session"),
+      ]);
+    },
+    async thenTheStoredFieldsAreRestored() {
+      expect(restoredSessions).toEqual([SESSION, BARE_SESSION, undefined]);
+      const persisted = await database.$client.query(`
+        SELECT id, user_id, created_at, expires_at, last_active_at, mfa, metadata
+        FROM "authentication_session"
+        ORDER BY id
+      `);
+      expect(persisted.rows).toEqual([
+        {
+          id: SESSION.id,
+          user_id: SESSION.userId,
+          created_at: SESSION.createdAt,
+          expires_at: SESSION.expiresAt,
+          last_active_at: SESSION.lastActiveAt,
+          mfa: SESSION.mfa,
+          metadata: SESSION.metadata,
+        },
+        {
+          id: BARE_SESSION.id,
+          user_id: BARE_SESSION.userId,
+          created_at: BARE_SESSION.createdAt,
+          expires_at: BARE_SESSION.expiresAt,
+          last_active_at: BARE_SESSION.lastActiveAt,
+          mfa: null,
+          metadata: null,
+        },
+      ]);
+    },
+    async whenTheUserSessionsAreRevoked() {
+      listedSessions = await store.listUserSessions(SESSION.userId);
+      await store.deleteUserSessions(SESSION.userId);
+    },
+    async thenOnlyTheSelectedUserSessionsAreRevoked() {
+      expect(listedSessions).toHaveLength(2);
+      expect(listedSessions).toEqual(
+        expect.arrayContaining([SESSION, BARE_SESSION]),
+      );
+      expect(await store.listUserSessions(SESSION.userId)).toEqual([]);
+      expect(await store.listUserSessions("missing-user")).toEqual([]);
+      expect(await store.getSession(OTHER_SESSION.id)).toEqual(OTHER_SESSION);
+    },
+    async whenConcurrentRequestsTouchTheSession() {
+      await Promise.all([
+        store.touchSession(SESSION.id, LATEST_ACTIVITY),
+        store.touchSession(SESSION.id, new Date("2020-01-01T00:01:00Z")),
+        store.touchSession(SESSION.id, new Date("2020-01-01T00:02:00Z")),
+      ]);
+      await store.touchSession(SESSION.id, SESSION.lastActiveAt);
+    },
+    async thenOnlyTheLatestActivityIsChanged() {
+      expect(await store.getSession(SESSION.id)).toEqual({
+        ...SESSION,
+        lastActiveAt: LATEST_ACTIVITY,
+      });
+      expect(await store.getSession(OTHER_SESSION.id)).toEqual(OTHER_SESSION);
+    },
+    async whenTheDeletedSessionIsTouched() {
+      await store.deleteSession(SESSION.id);
+      await store.touchSession(SESSION.id, new Date("2020-01-03T00:00:00Z"));
+      await store.touchSession("missing-session", LATEST_ACTIVITY);
+    },
+    async thenTheSessionRemainsDeleted() {
+      expect(await store.getSession(SESSION.id)).toBeUndefined();
+      expect(await store.listUserSessions(SESSION.userId)).toEqual([]);
+      expect(await store.getSession(OTHER_SESSION.id)).toEqual(OTHER_SESSION);
+    },
+    async whenRequestsDeleteTheSessionConcurrently() {
+      deletionResults = await Promise.all([
+        store.deleteSession(SESSION.id),
+        store.deleteSession(SESSION.id),
+        store.deleteSession(SESSION.id),
+      ]);
+    },
+    async thenOnlyOneDeletionSucceeds() {
+      expect(deletionResults.sort()).toEqual([false, false, true]);
+      expect(await store.deleteSession(SESSION.id)).toBe(false);
+      expect(await store.deleteSession("missing-session")).toBe(false);
+      expect(await store.getSession(SESSION.id)).toBeUndefined();
+      expect(await store.getSession(OTHER_SESSION.id)).toEqual(OTHER_SESSION);
     },
   };
+}
+
+async function createSessionStoreTestApplication() {
+  const testingModule = await Test.createTestingModule({
+    imports: [ApplicationModule],
+  }).compile();
+  const application = testingModule.createNestApplication();
+  application.useLogger(false);
+  try {
+    await application.init();
+    return application;
+  } catch (error) {
+    await application.close();
+    throw error;
+  }
 }
 
 function createDisabledFeaturesSystemUnderTest(application: INestApplication) {

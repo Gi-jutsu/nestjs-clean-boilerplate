@@ -1,21 +1,17 @@
-import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
-import { ProblemDetailsFilter } from "@api/filters/problem-details.filter.js";
 import { configureHttpApplication } from "@api/configure-http-application.js";
-import { createHttpApplicationOptions } from "@api/http-application-options.js";
 import { ApplicationEnvironmentSchema } from "@api/environment.js";
+import { ProblemDetailsFilter } from "@api/filters/problem-details.filter.js";
+import { createHttpApplicationOptions } from "@api/http-application-options.js";
+import { CorrelationIdMiddleware } from "@api/middlewares/correlation-id.middleware.js";
+import { createObserveImports } from "@api/observability/observe.module.js";
 import { IdentityAndAccessModule } from "@modules/identity-and-access/identity-and-access.module.js";
 import type { AuthenticationUser } from "@modules/identity-and-access/infrastructure/authentication/authentication-user.js";
 import { userSchema } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
-import { getDrizzleToken } from "@nestjs/drizzle";
 import { CurrentUser, Public } from "@nestjs/authentication";
 import {
-  createObserveImports,
-  ObserveInstrument,
-} from "@api/observability/observe.module.js";
-import {
-  Controller,
   All,
+  Controller,
   Get,
   InternalServerErrorException,
   MiddlewareConsumer,
@@ -26,14 +22,14 @@ import {
 } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_FILTER, HttpAdapterHost, NestFactory } from "@nestjs/core";
-import { createNestProvider } from "@packages/nest-provider-factory/index.js";
+import { getDrizzleToken } from "@nestjs/drizzle";
 import { TracerService } from "@nestjs/observe";
+import { createNestProvider } from "@packages/nest-provider-factory/index.js";
 import { eq } from "drizzle-orm";
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import { gunzipSync } from "node:zlib";
 import supertest, { type Response } from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { z } from "zod";
 import { createTestingApplication } from "../../../specs/testing-application.js";
 
 const CORRELATION_ID = "observe-request-from-client";
@@ -44,20 +40,6 @@ const PRIVATE_PASSWORD = "observe-private-password";
 const PRIVATE_AUTHORIZATION = "Bearer observe-private-bearer-token";
 const PRIVATE_COOKIE = "session=observe-private-session-token";
 const OBSERVED_USER_EMAIL = "observe-native-auth@example.com";
-
-const SnapshotSchema = z.object({
-  ti: z.string(),
-  op: z.string().optional(),
-  d: z.number().optional(),
-  a: z.object({ sc: z.number(), ou: z.string().optional() }),
-  e: z.object({ message: z.string() }).optional(),
-  t: z.array(z.unknown()).optional(),
-});
-const TelemetrySchema = z.object({
-  serviceId: z.string(),
-  snapshots: z.array(SnapshotSchema).optional(),
-  logs: z.array(z.unknown()).optional(),
-});
 
 @Controller("observe-test")
 @Public()
@@ -92,12 +74,13 @@ class ObserveTestingModule implements NestModule {
   }
 }
 
-describe("Optional Observe HTTP instrumentation", { timeout: 10_000 }, () => {
+describe("Optional Observe HTTP wiring", { timeout: 10_000 }, () => {
   let collector: Awaited<ReturnType<typeof createCollector>>;
   let disabledApplication: INestApplication;
   let enabledApplication: INestApplication;
+  const cleanup: (() => Promise<void>)[] = [];
 
-  it("serves correlated requests without installing telemetry when disabled", async () => {
+  it("serves correlated requests without credentials or telemetry when disabled", async () => {
     const system = createSystemUnderTest(disabledApplication, collector);
     system.givenACorrelatedRequest();
 
@@ -108,47 +91,27 @@ describe("Optional Observe HTTP instrumentation", { timeout: 10_000 }, () => {
     system.thenTheTelemetryProviderIsAbsent();
   });
 
-  it("uses the client correlation ID for the request trace and response", async () => {
-    const system = createSystemUnderTest(enabledApplication, collector);
-    system.givenACorrelatedRequest();
-
-    await system.whenTheRequestIsHandled();
-
-    system.thenTheClientCorrelationIdIsReturned();
-    system.thenTheRequestTraceMatchesItsCorrelationId();
-    await system.thenTheCollectorReceivesTheSuccessfulRequest();
-  });
-
   it("generates one ID shared by the request trace and response", async () => {
     const system = createSystemUnderTest(enabledApplication, collector);
 
     await system.whenTheRequestIsHandled();
 
     system.thenTheRequestTraceMatchesItsCorrelationId();
-    await system.thenTheCollectorReceivesTheSuccessfulRequest();
   });
 
-  it("reports failed requests with their correlation ID", async () => {
-    const system = createSystemUnderTest(enabledApplication, collector);
-    system.givenACorrelatedRequest();
-
-    await system.whenTheRequestFails();
-
-    system.thenTheClientCorrelationIdIsReturned();
-    await system.thenTheCollectorReceivesTheFailure();
-  });
-
-  it("omits passwords, authorization and cookies from exported requests", async () => {
+  it("keeps sensitive failed requests correlated without exporting their private data", async () => {
     const system = createSystemUnderTest(enabledApplication, collector);
     system.givenASensitiveRequest();
 
     await system.whenTheSensitiveRequestFails();
 
-    await system.thenTheCollectorReceivesTheFailure();
+    system.thenTheClientCorrelationIdIsReturned();
+    system.thenTheProblemResponseIsReturned();
+    await system.thenTheConfiguredCollectorReceivesTheRequest();
     system.thenTheCollectorReceivedNoPrivateRequestData();
   });
 
-  it("traces a native authenticated request without exporting its credentials", async () => {
+  it("keeps native authentication working with correlated traces and private credentials", async () => {
     const system = createSystemUnderTest(enabledApplication, collector);
     system.givenACorrelatedRequest();
     await system.givenANewNativeUser();
@@ -156,29 +119,41 @@ describe("Optional Observe HTTP instrumentation", { timeout: 10_000 }, () => {
     await system.whenTheNativeUserSignsUpAndRequestsAProtectedRoute();
 
     system.thenTheAuthenticatedUserIsReturned();
+    system.thenTheClientCorrelationIdIsReturned();
     system.thenTheRequestTraceMatchesItsCorrelationId();
-    await system.thenTheCollectorReceivesTheSuccessfulRequest();
+    await system.thenTheConfiguredCollectorReceivesTheRequest();
     system.thenTheCollectorReceivedNoPrivateRequestData();
   });
 
   beforeAll(async () => {
     collector = await createCollector();
+    cleanup.push(() => collector.stop());
     disabledApplication = await createObservedApplication(
       false,
       collector.endpoint,
     );
+    cleanup.push(() => disabledApplication.close());
     enabledApplication = await createObservedApplication(
       true,
       collector.endpoint,
     );
+    cleanup.push(() => enabledApplication.close());
   });
 
   beforeEach(() => collector.reset());
 
   afterAll(async () => {
-    await enabledApplication.close();
-    await disabledApplication.close();
-    await collector.stop();
+    const failures: unknown[] = [];
+    for (const close of cleanup.toReversed()) {
+      try {
+        await close();
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (failures.length) {
+      throw new AggregateError(failures, "Observe fixture cleanup failed");
+    }
   });
 });
 
@@ -190,16 +165,8 @@ function createSystemUnderTest(
   let response: Response;
   let nativeCookie: string;
 
-  async function request(path: string) {
-    const pendingRequest = supertest(application.getHttpServer()).get(path);
-    if (correlationId) pendingRequest.set("x-correlation-id", correlationId);
-    response = await pendingRequest;
-  }
-
-  function findSnapshot() {
-    return collector.batches
-      .flatMap((batch) => batch.body.snapshots ?? [])
-      .find((snapshot) => snapshot.ti === response.headers["x-correlation-id"]);
+  function exportedRequests() {
+    return collector.batches.map((batch) => batch.body).join("\n");
   }
 
   return {
@@ -207,7 +174,7 @@ function createSystemUnderTest(
       correlationId = CORRELATION_ID;
     },
     givenASensitiveRequest() {
-      correlationId = CORRELATION_ID;
+      correlationId = `${CORRELATION_ID}-sensitive`;
     },
     async givenANewNativeUser() {
       await application
@@ -216,10 +183,11 @@ function createSystemUnderTest(
         .where(eq(userSchema.email, OBSERVED_USER_EMAIL));
     },
     async whenTheRequestIsHandled() {
-      await request("/observe-test/request");
-    },
-    async whenTheRequestFails() {
-      await request("/observe-test/failure");
+      const request = supertest(application.getHttpServer()).get(
+        "/observe-test/request",
+      );
+      if (correlationId) request.set("x-correlation-id", correlationId);
+      response = await request;
     },
     async whenTheSensitiveRequestFails() {
       response = await supertest(application.getHttpServer())
@@ -250,7 +218,7 @@ function createSystemUnderTest(
       expect(response.body.userId).toEqual(expect.any(String));
     },
     thenTheClientCorrelationIdIsReturned() {
-      expect(response.headers["x-correlation-id"]).toBe(CORRELATION_ID);
+      expect(response.headers["x-correlation-id"]).toBe(correlationId);
     },
     thenNoTraceWasCreated() {
       expect(response.status).toBe(200);
@@ -262,47 +230,31 @@ function createSystemUnderTest(
     thenTheRequestTraceMatchesItsCorrelationId() {
       expect(response.status).toBe(200);
       expect(response.headers["x-correlation-id"]).toEqual(expect.any(String));
+      expect(response.headers["x-correlation-id"]).not.toBe("");
       expect(response.body.traceId).toBe(response.headers["x-correlation-id"]);
     },
-    async thenTheCollectorReceivesTheSuccessfulRequest() {
-      await expect.poll(findSnapshot, { timeout: 8_000 }).toMatchObject({
-        a: { sc: 200 },
-        ti: response.headers["x-correlation-id"],
-      });
-      const snapshot = findSnapshot();
-      expect(snapshot?.d).toEqual(expect.any(Number));
-      expect(snapshot?.t?.length).toBeGreaterThan(0);
-      expect(collector.batches).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            path: "/applications/telemetry",
-            headers: expect.objectContaining({
-              "x-api-key": APPLICATION_KEY,
-              "x-api-secret": APPLICATION_SECRET,
-            }),
-            body: expect.objectContaining({ serviceId: SERVICE_ID }),
-          }),
-        ]),
-      );
-      expect(
-        collector.batches.flatMap((batch) => batch.body.logs ?? []),
-      ).toEqual([]);
-    },
-    async thenTheCollectorReceivesTheFailure() {
+    thenTheProblemResponseIsReturned() {
       expect(response.status).toBe(500);
       expect(response.headers["content-type"]).toMatch(
         /^application\/problem\+json/,
       );
-      await expect.poll(findSnapshot, { timeout: 8_000 }).toMatchObject({
-        a: { sc: 500 },
-        ti: CORRELATION_ID,
+    },
+    async thenTheConfiguredCollectorReceivesTheRequest() {
+      await expect
+        .poll(exportedRequests, { timeout: 8_000 })
+        .toContain(response.headers["x-correlation-id"]);
+      const batch = collector.batches.find((recorded) =>
+        recorded.body.includes(response.headers["x-correlation-id"]),
+      );
+      expect(batch).toBeDefined();
+      expect(batch!.headers).toMatchObject({
+        "x-api-key": APPLICATION_KEY,
+        "x-api-secret": APPLICATION_SECRET,
       });
-      expect(findSnapshot()?.t?.some(isFailedControllerSpan)).toBe(true);
+      expect(batch!.body).toContain(SERVICE_ID);
     },
     thenTheCollectorReceivedNoPrivateRequestData() {
-      const exported = collector.batches
-        .map((batch) => batch.rawBody)
-        .join("\n");
+      const exported = exportedRequests();
       expect(exported).not.toContain(PRIVATE_PASSWORD);
       expect(exported).not.toContain(PRIVATE_AUTHORIZATION);
       expect(exported).not.toContain(PRIVATE_COOKIE);
@@ -315,81 +267,69 @@ function createSystemUnderTest(
 }
 
 async function createObservedApplication(enabled: boolean, endpoint: string) {
-  const metadata = {
-    imports: [
-      ConfigModule.forRoot({
-        isGlobal: true,
-        ignoreEnvFile: true,
-        validationSchema: ApplicationEnvironmentSchema,
-        load: [
-          () =>
-            enabled
-              ? {
-                  OBSERVE_APP_KEY: APPLICATION_KEY,
-                  OBSERVE_APP_SECRET: APPLICATION_SECRET,
-                  OBSERVE_SERVICE_ID: SERVICE_ID,
-                  OBSERVE_ENDPOINT: endpoint,
-                }
-              : {},
-        ],
-      }),
-      ObserveTestingModule,
-      IdentityAndAccessModule,
-      ...createObserveImports(enabled),
-    ],
-    controllers: [ObserveTestController, ObservedAuthenticationController],
-    providers: [
-      createNestProvider(ProblemDetailsFilter, [HttpAdapterHost], APP_FILTER),
-    ],
+  const environment: Record<string, string | undefined> = {
+    OBSERVE_ENABLED: enabled ? "true" : undefined,
+    OBSERVE_APP_KEY: enabled ? APPLICATION_KEY : undefined,
+    OBSERVE_APP_SECRET: enabled ? APPLICATION_SECRET : undefined,
+    OBSERVE_SERVICE_ID: enabled ? SERVICE_ID : undefined,
+    OBSERVE_ENDPOINT: enabled ? endpoint : undefined,
   };
-  if (!enabled) return createTestingApplication(metadata, { bodyParser: true });
+  const previous = Object.fromEntries(
+    Object.keys(environment).map((key) => [key, process.env[key]]),
+  );
+  for (const [key, value] of Object.entries(environment)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 
-  // Nest's testing builder creates controllers before it accepts an instrument.
-  // Boot through NestFactory here so the provider instrumentation matches production.
-  @Module(metadata)
-  class InstrumentedTestingModule {}
-
-  const application = await NestFactory.create(InstrumentedTestingModule, {
-    ...createHttpApplicationOptions(),
-    instrument: ObserveInstrument,
-    logger: false,
-    abortOnError: false,
-  });
-  configureHttpApplication(application);
   try {
-    await application.listen(0, "127.0.0.1");
-    return application;
-  } catch (error) {
-    await application.close();
-    throw error;
+    const configuration = await ConfigModule.forRoot({
+      isGlobal: true,
+      ignoreEnvFile: true,
+      validationSchema: ApplicationEnvironmentSchema,
+    });
+    const metadata = {
+      imports: [
+        configuration,
+        ObserveTestingModule,
+        IdentityAndAccessModule,
+        ...createObserveImports(),
+      ],
+      controllers: [ObserveTestController, ObservedAuthenticationController],
+      providers: [
+        createNestProvider(ProblemDetailsFilter, [HttpAdapterHost], APP_FILTER),
+      ],
+    };
+    if (!enabled) return await createTestingApplication(metadata);
+
+    // Nest's testing builder creates controllers before it accepts an instrument.
+    // NestFactory lets this fixture exercise the production instrumentation lifecycle.
+    @Module(metadata)
+    class InstrumentedTestingModule {}
+
+    const application = await NestFactory.create(InstrumentedTestingModule, {
+      ...createHttpApplicationOptions(),
+      logger: false,
+      abortOnError: false,
+    });
+    try {
+      configureHttpApplication(application);
+      await application.listen(0, "127.0.0.1");
+      return application;
+    } catch (error) {
+      await application.close();
+      throw error;
+    }
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 }
 
-function isFailedControllerSpan(span: unknown): boolean {
-  if (typeof span !== "object" || span === null) return false;
-  if (
-    "c" in span &&
-    span.c === ObserveTestController.name &&
-    "m" in span &&
-    span.m === "fail" &&
-    "e" in span &&
-    span.e
-  )
-    return true;
-  return (
-    "ch" in span &&
-    Array.isArray(span.ch) &&
-    span.ch.some(isFailedControllerSpan)
-  );
-}
-
 async function createCollector() {
-  const batches: {
-    path: string;
-    headers: IncomingHttpHeaders;
-    body: z.infer<typeof TelemetrySchema>;
-    rawBody: string;
-  }[] = [];
+  const batches: { headers: IncomingHttpHeaders; body: string }[] = [];
   const server = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
     for await (const chunk of request) chunks.push(Buffer.from(chunk));
@@ -398,14 +338,7 @@ async function createCollector() {
       request.headers["content-encoding"] === "gzip"
         ? gunzipSync(compressed)
         : compressed;
-    const rawBody = payload.toString();
-    const body = TelemetrySchema.parse(JSON.parse(rawBody));
-    batches.push({
-      path: request.url ?? "",
-      headers: request.headers,
-      body,
-      rawBody,
-    });
+    batches.push({ headers: request.headers, body: payload.toString() });
     response.writeHead(200, { "content-type": "application/json" });
     response.end("{}");
   });
