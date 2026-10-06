@@ -26,12 +26,8 @@ import {
   DomainEventPublisherToken,
   type DomainEventPublisher,
 } from "@packages/outbox/index.js";
-import {
-  outboxMessageSchema,
-  type DatabaseTransaction,
-} from "@packages/outbox/infrastructure/database/drizzle.schema.js";
+import type { DatabaseTransaction } from "@packages/outbox/infrastructure/database/drizzle.schema.js";
 import { sql } from "drizzle-orm";
-import { readFileSync } from "node:fs";
 import { integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -40,9 +36,6 @@ const RECEIPT_CONSUMER = "outbox-test-receipt";
 const INVENTORY_CONSUMER = "outbox-test-inventory";
 const ABANDONED_OWNER = "outbox-test-crashed-relay";
 const ROLLBACK_REASON = new Error("Order was refused");
-const PENDING_LEGACY_EVENT_ID = "de1c614c-2434-44c6-814f-a61f61be2ced";
-const PROCESSED_LEGACY_EVENT_ID = "fc75c6b1-aae5-4c30-a737-10c28ea9b6d4";
-const LEGACY_OCCURRED_AT = new Date("2026-10-01T10:00:00.000Z");
 
 const ordersSchema = pgTable("outbox_test_orders", { id: text().primaryKey() });
 const deliveriesSchema = pgTable("outbox_test_deliveries", {
@@ -219,16 +212,6 @@ describe("OutboxDomainEventPublisher with PostgreSQL", () => {
     await systemUnderTest.thenBothConsumersHaveAnInboxRecord();
   });
 
-  it("imports pending legacy events once and preserves processed history", async () => {
-    const systemUnderTest = createSystemUnderTest(application, database);
-    await systemUnderTest.givenPendingAndProcessedLegacyEvents();
-
-    await systemUnderTest.whenLegacyEventsAreImportedTwice();
-
-    await systemUnderTest.thenOnlyThePendingLegacyEventIsQueued();
-    await systemUnderTest.thenLegacyHistoryIsPreserved();
-  });
-
   beforeAll(async () => {
     application = await NestFactory.createApplicationContext(
       OutboxTestingModule,
@@ -248,14 +231,14 @@ describe("OutboxDomainEventPublisher with PostgreSQL", () => {
 
   beforeEach(async () => {
     await database.execute(
-      sql`TRUNCATE outbox_test_orders, outbox_test_deliveries, outbox_test_inventory, public.outbox_messages, nest_outbox.messages, nest_outbox.inbox, nest_outbox.dead_letters RESTART IDENTITY`,
+      sql`TRUNCATE outbox_test_orders, outbox_test_deliveries, outbox_test_inventory, nest_outbox.messages, nest_outbox.inbox, nest_outbox.dead_letters RESTART IDENTITY`,
     );
     application.get(InventoryConsumer).unavailable = false;
   });
 
   afterAll(async () => {
     await database.execute(
-      sql`TRUNCATE public.outbox_messages, nest_outbox.messages, nest_outbox.inbox, nest_outbox.dead_letters RESTART IDENTITY`,
+      sql`TRUNCATE nest_outbox.messages, nest_outbox.inbox, nest_outbox.dead_letters RESTART IDENTITY`,
     );
     await database.execute(
       sql`DROP TABLE outbox_test_orders, outbox_test_deliveries, outbox_test_inventory`,
@@ -326,24 +309,6 @@ function createSystemUnderTest(
       abandonedEventIds = messages.map((message) => message.id);
       await waitFor(5);
     },
-    async givenPendingAndProcessedLegacyEvents() {
-      await database.insert(outboxMessageSchema).values([
-        {
-          id: PENDING_LEGACY_EVENT_ID,
-          eventType: OrderPlaced.name,
-          payload: { orderId: ORDER_ID },
-          occurredAt: LEGACY_OCCURRED_AT,
-        },
-        {
-          id: PROCESSED_LEGACY_EVENT_ID,
-          eventType: OrderPlaced.name,
-          payload: { orderId: "previous-order" },
-          occurredAt: LEGACY_OCCURRED_AT,
-          processedAt: LEGACY_OCCURRED_AT,
-          errorMessage: "Legacy delivery failed",
-        },
-      ]);
-    },
     async whenTheOrderTransactionRollsBack() {
       await rollBack(saveOrder);
     },
@@ -381,16 +346,6 @@ function createSystemUnderTest(
             }),
         );
       });
-    },
-    async whenLegacyEventsAreImportedTwice() {
-      const migration = readFileSync(
-        "drizzle/0003_official_outbox.sql",
-        "utf8",
-      );
-      const importSql = migration.split("--> statement-breakpoint").at(-1);
-      if (!importSql) throw new Error("The legacy event import was not found");
-      await database.execute(sql.raw(importSql));
-      await database.execute(sql.raw(importSql));
     },
     async thenNoOrderOrEventWasStored() {
       expect(transactionFailure).toBe(ROLLBACK_REASON);
@@ -489,49 +444,6 @@ function createSystemUnderTest(
           topic: event.type,
           payload: event.payload,
           key: ORDER_ID,
-        },
-      ]);
-    },
-    async thenOnlyThePendingLegacyEventIsQueued() {
-      expect(
-        (
-          await database.execute(
-            sql`SELECT id, topic, payload, created_at, available_at, attempts FROM nest_outbox.messages`,
-          )
-        ).rows,
-      ).toEqual([
-        {
-          id: PENDING_LEGACY_EVENT_ID,
-          topic: OrderPlaced.name,
-          payload: { orderId: ORDER_ID },
-          created_at: String(LEGACY_OCCURRED_AT.getTime()),
-          available_at: String(LEGACY_OCCURRED_AT.getTime()),
-          attempts: 0,
-        },
-      ]);
-    },
-    async thenLegacyHistoryIsPreserved() {
-      expect(
-        await database
-          .select()
-          .from(outboxMessageSchema)
-          .orderBy(outboxMessageSchema.id),
-      ).toEqual([
-        {
-          id: PENDING_LEGACY_EVENT_ID,
-          eventType: OrderPlaced.name,
-          payload: { orderId: ORDER_ID },
-          occurredAt: LEGACY_OCCURRED_AT,
-          processedAt: null,
-          errorMessage: null,
-        },
-        {
-          id: PROCESSED_LEGACY_EVENT_ID,
-          eventType: OrderPlaced.name,
-          payload: { orderId: "previous-order" },
-          occurredAt: LEGACY_OCCURRED_AT,
-          processedAt: LEGACY_OCCURRED_AT,
-          errorMessage: "Legacy delivery failed",
         },
       ]);
     },

@@ -13,6 +13,11 @@ Configure `DATABASE_URL` in `.env`, then run:
 pnpm db:generate --name=initial
 ```
 
+Before applying this history, add a custom migration for the official outbox
+schema using the [package-schema generation workflow](outbox-migration.md#first-setup-in-a-consuming-application).
+Drizzle allocates the new file in your application history; fill it with the
+versioned SQL from the installed NestJS package.
+
 Review the generated SQL and commit the entire `drizzle/` directory, including
 snapshots and the journal. Apply the reviewed files to an empty database with
 `pnpm db:migrate` before starting the application.
@@ -40,6 +45,10 @@ position in your history are application-specific.
 If an existing database has no migration history, reconcile its current schema
 and establish an application baseline before adopting this workflow. Generating
 initial SQL does not establish that the SQL is safe to apply to populated tables.
+
+Package-owned schema upgrades also use new custom migrations in your application
+history. The [outbox upgrade workflow](outbox-migration.md#package-upgrades) explains
+how to select the package schema versions without rewriting applied migrations.
 
 ## Deployment and tests
 
