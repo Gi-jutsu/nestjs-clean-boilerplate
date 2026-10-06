@@ -7,7 +7,7 @@ For a fresh database, apply all migrations and start the application.
 For an existing installation:
 
 1. Stop all instances of the legacy application. Its relay must stop before the migration imports pending messages.
-2. Back up the database and inspect `public.outbox_messages`. Rows with `processed_at IS NULL` are imported into `nest_outbox.messages`, preserving their event ID, topic, payload and UTC timestamp. The import ignores already-present IDs and leaves all legacy rows intact.
+2. Back up the database and inspect `public.outbox_messages`. Its `occurred_at` column has no timezone; migration 0003 interprets those values as UTC. Verify the legacy writers' database session timezone and timestamp conventions. If they stored local wall times, reconcile their interpretation in a reviewed migration before running this import. Rows with `processed_at IS NULL` are imported into `nest_outbox.messages`, preserving their event ID, topic, payload and UTC timestamp. The import ignores already-present IDs and leaves all legacy rows intact.
 3. Apply migrations with `pnpm drizzle-kit migrate`.
 4. Update event listeners to `@OnOutboxMessage(topic, { consumer: 'stable-consumer-name' })` before restarting the application. A topic without a consumer is retried and eventually dead-lettered. The boilerplate has no production consumers; applications add their own.
 5. Reconcile legacy rows with `processed_at IS NOT NULL` against their actual effects. The previous relay wrote that timestamp before delivery, so it does not prove delivery succeeded. Never replay that entire history automatically. After checking downstream effects, explicitly requeue only events that need recovery and whose consumers can handle duplicates.
