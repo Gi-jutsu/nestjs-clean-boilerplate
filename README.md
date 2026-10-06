@@ -37,17 +37,43 @@ cd nestjs-clean-boilerplate
 
 ### 2. Bootstrap the PostgreSQL database
 
-2.1. Start PostgreSQL using [docker-compose.yaml](/docker/docker-compose.yaml)
+Install dependencies and configure the application first:
 
 ```shell
-docker compose -f docker/docker-compose.yaml up database -d
+pnpm install
+cp .env.example .env
 ```
 
-2.2. Run the SQL migrations
+Set `DATABASE_URL` in `.env` to your PostgreSQL connection string.
+
+2.1. Start PostgreSQL using [docker-compose.yaml](docker-compose.yaml)
 
 ```shell
-pnpm drizzle-kit migrate
+docker compose up database -d
 ```
+
+2.2. Generate your application's migration history
+
+```shell
+pnpm db:generate --name=initial
+pnpm db:generate --custom --name=nest_outbox_v1
+pnpm exec nest-outbox sql --from 0 --to 1 --statement-breakpoints
+```
+
+Copy the last command's SQL output into the exact new file path printed by the
+custom-generation command. Review and commit the generated SQL, snapshots, and
+journal in `drizzle/`, then apply them:
+
+```shell
+pnpm db:migrate
+```
+
+The boilerplate ships schema definitions and generation commands. Each application
+owns its migration history. Preserve that history when adopting template updates;
+generate and review subsequent migrations against your application's latest
+snapshot. See [migration ownership](docs/database-migrations.md) and the
+[outbox schema workflow](docs/outbox-migration.md) for existing apps and package
+upgrades.
 
 ### 3. Start the API
 
@@ -59,10 +85,13 @@ You can run the backend either **locally** or **with Docker**.
 pnpm dev
 ```
 
-#### Otpion B: Run with Docker
+#### Option B: Run with Docker
+
+Set `DATABASE_URL` in `.env.docker` to use the Compose hostname `database`
+(e.g. `postgresql://admin:password@database:5432/database`).
 
 ```shell
-docker compose -f docker/docker-compose.yaml up api -d
+docker compose up nestjs-clean-boilerplate -d
 ```
 
 ## 🌟 Key Features
@@ -95,7 +124,10 @@ Testcontainers by default. To use an existing disposable test database, run:
 TEST_DATABASE_URL=postgresql://localhost:5432/boilerplate_test pnpm test
 ```
 
-The test runner applies migrations to that database. Test applications use
+The test runner prepares the current schema in that disposable database without
+reading or changing your application migration files. It refuses schema changes
+that may lose data. The database role needs `CREATEDB`: migration scenarios create
+and remove their own temporary databases. Test applications use
 `@nestjs/testing` and the production HTTP configuration, and close with
 `app.close()` so Nest lifecycle hooks run. Integration scenarios use flat
 `given…`, `when…`, and `then…` methods; their factory owns fixtures, HTTP requests,
@@ -107,7 +139,8 @@ and assertions.
 - Pass the current Drizzle transaction to `DomainEventPublisher.publish(aggregate, transaction)`. Aggregate changes and their events commit or roll back together; the relay only sees committed rows.
 - `@OnOutboxMessage(topic, { consumer })` discovers consumers. Give each consumer a stable name and use `context.processInTransaction(transaction, work)` when its effects belong to the same database.
 - Delivery is at least once. Consumers that call external services must use those services' idempotency support. Messages from the same aggregate are delivered in insertion order.
-- Run `pnpm drizzle-kit migrate` before starting the application, including production deployments. The migration creates the package-owned `nest_outbox` schema; application startup checks it without changing it.
+- Generate package schema SQL with the official `nest-outbox sql` command and put it in a custom migration allocated by your application's Drizzle history. The boilerplate ships no numbered outbox migration or automatic legacy-event import.
+- Run `pnpm db:migrate` before starting each release. Application startup uses `migrate: false` and checks the package-owned `nest_outbox` schema without changing it.
 
 For an existing installation, follow the [outbox migration instructions](docs/outbox-migration.md) before deploying this version.
 
@@ -115,7 +148,7 @@ For an existing installation, follow the [outbox migration instructions](docs/ou
 
 - <b>Optimized for Deployments</b>: Multi-stage build keeps the production image lean, reducing network footprint and speeding up deployments.
 
-- <b>Run Locally:</b> Launch the entire stack (API + Database) with [docker-compose.yaml](/docker/docker-compose.yaml)
+- <b>Run Locally:</b> Launch the entire stack (API + Database) with [docker-compose.yaml](docker-compose.yaml)
 
 - <b>Security</b>: Runs as a non-root user to reduce security risks</b>
 
