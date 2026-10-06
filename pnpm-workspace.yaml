@@ -5,3 +5,10 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   ssh2: true
+
+# Keep patched transitive versions until upstream dependency constraints advance.
+overrides:
+  proxy-addr: 2.0.8
+  qs: 6.16.0
+  shell-quote: 1.12.0
+  source-map-js: 1.2.2
