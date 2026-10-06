@@ -1,4 +1,4 @@
-import { DrizzlePostgresPoolToken } from "@modules/shared-kernel/infrastructure/database/drizzle-postgres-pool.token.js";
+import { SharedKernelDatabaseToken } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.token.js";
 import { SharedKernelDatabaseModule } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.module.js";
 import { ApplicationRuntimeToken } from "@modules/shared-kernel/ports/application-runtime.port.js";
 import { HealthCheckUseCase } from "@modules/shared-kernel/use-cases/health-check/health-check.use-case.js";
@@ -10,7 +10,7 @@ import { OutboxModule } from "@packages/outbox/index.js";
   imports: [
     SharedKernelDatabaseModule,
     OutboxModule.register({
-      databaseToken: DrizzlePostgresPoolToken,
+      databaseToken: SharedKernelDatabaseToken,
       imports: [SharedKernelDatabaseModule],
     }),
   ],
@@ -20,7 +20,7 @@ import { OutboxModule } from "@packages/outbox/index.js";
       useValue: process,
     },
     createNestProvider(HealthCheckUseCase, [
-      DrizzlePostgresPoolToken,
+      SharedKernelDatabaseToken,
       ApplicationRuntimeToken,
     ]),
   ],

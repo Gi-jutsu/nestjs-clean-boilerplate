@@ -1,3 +1,3 @@
 import type { Branded } from "@packages/branded-types/index.js";
 
-export type BrandedInjectionToken<T> = Branded<symbol, T>;
+export type BrandedInjectionToken<T> = Branded<string | symbol, T>;

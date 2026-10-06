@@ -6,6 +6,7 @@ import {
 } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
 import { outboxMessageSchema } from "@packages/outbox/infrastructure/database/drizzle.schema.js";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { Pool } from "pg";
 
 export const SharedKernelDatabaseSchema = {
   account: accountSchema,
@@ -17,4 +18,7 @@ export const SharedKernelDatabaseSchema = {
 
 export type SharedKernelDatabaseSchema = typeof SharedKernelDatabaseSchema;
 
-export type SharedKernelDatabase = NodePgDatabase<SharedKernelDatabaseSchema>;
+export type SharedKernelDatabase =
+  NodePgDatabase<SharedKernelDatabaseSchema> & {
+    $client: Pool;
+  };

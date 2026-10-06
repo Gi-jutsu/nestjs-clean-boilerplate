@@ -1,10 +1,10 @@
 import { createSharedKernelDrizzleModuleOptions } from "@modules/shared-kernel/infrastructure/database/drizzle-module.factory.js";
 import { Module } from "@nestjs/common";
-import { DrizzleModule } from "@packages/nest-drizzle/index.js";
+import { DrizzleModule } from "@nestjs/drizzle";
 
 @Module({
   imports: [
-    DrizzleModule.registerAsync(createSharedKernelDrizzleModuleOptions()),
+    DrizzleModule.forRootAsync(createSharedKernelDrizzleModuleOptions()),
   ],
   exports: [DrizzleModule],
 })

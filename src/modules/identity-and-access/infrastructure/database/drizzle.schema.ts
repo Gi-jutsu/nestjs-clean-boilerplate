@@ -45,6 +45,7 @@ export const accountSchema = pgTable("account", {
   id: text("id").primaryKey(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
+  issuer: text("issuer"),
   userId: text("user_id")
     .notNull()
     .references(() => userSchema.id, { onDelete: "cascade" }),

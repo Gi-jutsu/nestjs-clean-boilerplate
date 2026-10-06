@@ -6,12 +6,12 @@ import {
   userSchema,
   verificationSchema,
 } from "@modules/identity-and-access/infrastructure/database/drizzle.schema.js";
-import { SharedKernelEnvironmentKeys } from "@modules/shared-kernel/environment.js";
+import type { SharedKernelDatabase } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { SharedKernelDatabaseModule } from "@modules/shared-kernel/infrastructure/database/shared-kernel-database.module.js";
+import { getDrizzleToken } from "@nestjs/drizzle";
 import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 
 const BetterAuthDatabaseSchema = {
   account: accountSchema,
@@ -22,35 +22,33 @@ const BetterAuthDatabaseSchema = {
 
 export function createBetterAuthModule() {
   return AuthModule.forRootAsync({
-    inject: [ConfigService],
+    imports: [SharedKernelDatabaseModule],
+    inject: [ConfigService, getDrizzleToken()],
     useFactory: useBetterAuthFactory,
   });
 }
 
-function useBetterAuthFactory(config: ConfigService) {
-  return { auth: createBetterAuth(config) };
+function useBetterAuthFactory(
+  config: ConfigService,
+  database: SharedKernelDatabase,
+) {
+  return { auth: createBetterAuth(config, database) };
 }
 
-function createBetterAuth(config: ConfigService) {
-  const databaseUrl = config.getOrThrow(
-    SharedKernelEnvironmentKeys.DATABASE_URL,
-  );
+function createBetterAuth(
+  config: ConfigService,
+  database: SharedKernelDatabase,
+) {
   const baseURL = config.getOrThrow(
     IdentityAndAccessEnvironmentKeys.BETTER_AUTH_URL,
   );
-
-  const pool = new Pool({
-    connectionString: databaseUrl,
-  });
-
-  const client = drizzle(pool);
 
   return betterAuth({
     baseURL,
     emailAndPassword: {
       enabled: true,
     },
-    database: drizzleAdapter(client, {
+    database: drizzleAdapter(database, {
       provider: "pg",
       schema: BetterAuthDatabaseSchema,
     }),
