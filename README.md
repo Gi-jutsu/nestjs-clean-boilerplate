@@ -87,6 +87,12 @@ the database type when registering plain classes with `createNestProvider()`.
 
 ### Testing
 
+The API uses NestJS 12's built-in `StandardSchemaValidationPipe`. Bind Zod schemas
+to request parameters with `@Body({ schema })`, `@Query({ schema })`, or
+`@Param({ schema })`; the schema validates and transforms the input. Environment
+validation uses the composed Zod schema through `@nestjs/config`'s
+`validationSchema` option. Node.js 24 LTS is recommended.
+
 Run `pnpm test` for unit and PostgreSQL integration coverage, and `pnpm build`
 for type checking and compilation. Integration tests start PostgreSQL through
 Testcontainers by default. To use an existing disposable test database, run:

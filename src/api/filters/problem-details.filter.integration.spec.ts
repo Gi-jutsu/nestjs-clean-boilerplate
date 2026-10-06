@@ -25,9 +25,9 @@ import {
   ResourceAlreadyExistsError,
   ResourceNotFoundError,
 } from "@packages/domain-driven-design/index.js";
-import { IsEmail } from "class-validator";
 import supertest, { type Response } from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 
 const CORRELATION_ID = "problem-details-request";
 const PRIVATE_ERROR_DETAIL = "Database credentials: do-not-expose-this-secret";
@@ -340,8 +340,8 @@ function createSystemUnderTest(application: INestApplication) {
       assertProblem({
         status: 400,
         title: "Bad Request",
-        detail: "email must be an email",
-        errors: ["email must be an email"],
+        detail: "email: Invalid email address",
+        errors: ["email: Invalid email address"],
       });
     },
     thenTheHealthProblemIsReturned() {
@@ -396,10 +396,8 @@ class ErrorScenario {
   failure: unknown;
 }
 
-class ValidatedAccountBody {
-  @IsEmail()
-  email!: string;
-}
+const ValidatedAccountSchema = z.object({ email: z.email() });
+type ValidatedAccountBody = z.infer<typeof ValidatedAccountSchema>;
 
 @Injectable()
 class DenyAccountAccessGuard implements CanActivate {
@@ -429,7 +427,9 @@ class ErrorScenariosController {
     return { account: "protected" };
   }
   @Post("validated")
-  validatedAccount(@Body() body: ValidatedAccountBody) {
+  validatedAccount(
+    @Body({ schema: ValidatedAccountSchema }) body: ValidatedAccountBody,
+  ) {
     return body;
   }
   @Get("middleware")
