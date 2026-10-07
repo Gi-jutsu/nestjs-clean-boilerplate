@@ -85,6 +85,16 @@ function createSystemUnderTest(application: INestApplication) {
         REQUEST_LIMIT,
       );
       expect(responses.filter(({ status }) => status === 429)).toHaveLength(1);
+      const rejectedResponse = responses.find(({ status }) => status === 429)!;
+      expect(rejectedResponse.headers["content-type"]).toMatch(
+        /^application\/problem\+json/,
+      );
+      expect(rejectedResponse.body).toMatchObject({
+        type: "about:blank",
+        title: "Too Many Requests",
+        status: 429,
+        instance: "/health-check",
+      });
     },
   };
 }

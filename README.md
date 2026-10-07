@@ -100,7 +100,7 @@ docker compose up nestjs-clean-boilerplate -d
 
 The public `GET /health-check` endpoint uses `@nestjs/terminus` to check PostgreSQL.
 It returns HTTP 200 with `status: "ok"` when the database responds, or HTTP 503 with
-`status: "error"` when it fails or the check exceeds one second. Responses use
+numeric `status: 503` when it fails or the check exceeds one second. Responses use
 Terminus's `info`, `error`, and `details` fields, with the database named `postgresql`.
 
 ### 🗃️ PostgreSQL with official NestJS Drizzle integration
@@ -133,6 +133,19 @@ Test applications use
 `app.close()` so Nest lifecycle hooks run. Integration scenarios use flat
 `given…`, `when…`, and `then…` methods; their factory owns fixtures, HTTP requests,
 and assertions.
+
+### HTTP problem details
+
+The global NestJS exception filter returns errors as
+[`application/problem+json`](https://www.rfc-editor.org/rfc/rfc9457), including
+`type`, `title`, numeric HTTP `status`, `detail`, and the request path in
+`instance`. Responses include a timestamp and the correlation ID when available.
+Domain resource errors map to 404 or 409; unexpected failures return a safe 500.
+
+Explicit `HttpException` response extensions remain available. For example,
+Terminus health failures keep `info`, `error`, and `details`, while their root
+`status` becomes the numeric HTTP status 503. Query parameters and diagnostic
+`cause` or `stack` fields are excluded from the response.
 
 ### 📬 Outbox Pattern
 

@@ -73,6 +73,10 @@ function createSystemUnderTest(
     },
 
     thenPostgreSQLIsUnavailable() {
+      expect(response.headers["content-type"]).toMatch(
+        /application\/problem\+json/,
+      );
+      expect(response.body.status).toBe(503);
       expect(response.body.details.postgresql.status).toBe("down");
     },
   };
