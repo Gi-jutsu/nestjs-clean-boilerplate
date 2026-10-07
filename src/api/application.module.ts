@@ -23,7 +23,7 @@ const MAXIMUM_NUMBER_OF_REQUESTS_PER_MINUTE = 100;
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: ApplicationEnvironmentSchema.parse,
+      validationSchema: ApplicationEnvironmentSchema,
     }),
     ThrottlerModule.forRoot([
       {
