@@ -2,6 +2,7 @@ import { IdentityAndAccessEnvironmentVariablesShape } from "@modules/identity-an
 import { createEnvironmentKeys } from "@modules/shared-kernel/environment-keys.js";
 import { SharedKernelEnvironmentVariablesShape } from "@modules/shared-kernel/environment.js";
 import { z, type ZodRawShape } from "zod";
+import { ObserveEnvironmentSchema } from "@api/observability/environment.js";
 
 export const ApiEnvironmentVariablesShape = {
   API_BASE_URL: z.string().url().default("http://0.0.0.0:8080"),
@@ -16,11 +17,14 @@ export const ApiEnvironmentKeys = createEnvironmentKeys(
 
 export const ApiEnvironmentSchema = z.object(ApiEnvironmentVariablesShape);
 
-export const ApplicationEnvironmentSchema = z.object({
-  ...ApiEnvironmentVariablesShape,
-  ...IdentityAndAccessEnvironmentVariablesShape,
-  ...SharedKernelEnvironmentVariablesShape,
-});
+export const ApplicationEnvironmentSchema = z.intersection(
+  z.object({
+    ...ApiEnvironmentVariablesShape,
+    ...IdentityAndAccessEnvironmentVariablesShape,
+    ...SharedKernelEnvironmentVariablesShape,
+  }),
+  ObserveEnvironmentSchema,
+);
 
 export type ApiEnvironment = z.infer<typeof ApiEnvironmentSchema>;
 export type ApplicationEnvironment = z.infer<

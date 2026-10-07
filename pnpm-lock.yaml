@@ -29,6 +29,9 @@ importers:
       '@nestjs/drizzle':
         specifier: 0.0.1
         version: 0.0.1(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.2)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0))(reflect-metadata@0.2.2)
+      '@nestjs/observe':
+        specifier: 0.3.6
+        version: 0.3.6(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/outbox':
         specifier: 0.1.0
         version: 0.1.0(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.2)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0))(kysely@0.29.5)(pg@8.23.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -1195,6 +1198,43 @@ packages:
       '@nestjs/core': ^11.0.0 || ^12.0.0
       drizzle-orm: '>=0.35.0 || >=1.0.0-0'
       reflect-metadata: ^0.1.13 || ^0.2.0
+
+  '@nestjs/observe@0.3.6':
+    resolution: {integrity: sha512-gtra2tdzT/dUysQ9BhjuNaYef3TA76TWHgEjGY18ozgU7InB+1AOuicXuQHEZerrTnKCGZZSCpiNoHwaj2KGug==}
+    engines: {node: '>= 20.19.0'}
+    peerDependencies:
+      '@nestjs/bull': ^11.0.0 || ^12.0.0
+      '@nestjs/bullmq': ^11.0.0 || ^12.0.0
+      '@nestjs/common': ^11.0.0 || ^12.0.0
+      '@nestjs/core': ^11.0.0 || ^12.0.0
+      '@nestjs/graphql': ^13.0.0 || ^14.0.0
+      '@nestjs/microservices': ^11.0.0 || ^12.0.0
+      '@nestjs/schedule': ^4.0.0 || ^5.0.0 || ^6.0.0 || ^12.0.0
+      '@nestjs/websockets': ^11.0.0 || ^12.0.0
+      '@taskforcesh/bullmq-pro': ^7.0.0
+      bull: ^3.3.0 || ^4.0.0
+      bullmq: ^5.0.0 || ^6.0.0
+      reflect-metadata: ^0.1.12 || ^0.2.0
+      rxjs: ^7.0.0
+    peerDependenciesMeta:
+      '@nestjs/bull':
+        optional: true
+      '@nestjs/bullmq':
+        optional: true
+      '@nestjs/graphql':
+        optional: true
+      '@nestjs/microservices':
+        optional: true
+      '@nestjs/schedule':
+        optional: true
+      '@nestjs/websockets':
+        optional: true
+      '@taskforcesh/bullmq-pro':
+        optional: true
+      bull:
+        optional: true
+      bullmq:
+        optional: true
 
   '@nestjs/outbox@0.1.0':
     resolution: {integrity: sha512-HKrBiNZQStHG/2UW50abvSDh8glPE+EwKWFUk32Pq6d4KGRUn5OmubZP2dGFXBTLGHnriUqsNWhhY+2dGf5T7Q==}
@@ -4905,7 +4945,7 @@ snapshots:
   '@jridgewell/trace-mapping@0.3.31':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
@@ -5074,6 +5114,14 @@ snapshots:
       '@nestjs/core': 12.1.2(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0)
       reflect-metadata: 0.2.2
+
+  '@nestjs/observe@0.3.6(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      '@nestjs/common': 12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
+      '@nestjs/core': 12.1.2(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
 
   '@nestjs/outbox@0.1.0(@nestjs/common@12.1.2(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.2)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(gel@2.1.0(supports-color@10.2.2))(kysely@0.29.5)(pg@8.23.0))(kysely@0.29.5)(pg@8.23.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
