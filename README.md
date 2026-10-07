@@ -96,6 +96,13 @@ docker compose up nestjs-clean-boilerplate -d
 
 ## 🌟 Key Features
 
+### 🩺 Health Checks
+
+The public `GET /health-check` endpoint uses `@nestjs/terminus` to check PostgreSQL.
+It returns HTTP 200 with `status: "ok"` when the database responds, or HTTP 503 with
+`status: "error"` when it fails or the check exceeds one second. Responses use
+Terminus's `info`, `error`, and `details` fields, with the database named `postgresql`.
+
 ### 🗃️ PostgreSQL with official NestJS Drizzle integration
 
 [`@nestjs/drizzle`](https://docs.nestjs.com/data/drizzle) creates the database
