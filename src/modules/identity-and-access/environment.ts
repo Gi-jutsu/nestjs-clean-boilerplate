@@ -2,8 +2,17 @@ import { createEnvironmentKeys } from "@modules/shared-kernel/environment-keys.j
 import { z, type ZodRawShape } from "zod";
 
 export const IdentityAndAccessEnvironmentVariablesShape = {
-  BETTER_AUTH_URL: z.string().url().default("http://0.0.0.0:8080"),
-  JWT_SECRET: z.string(),
+  AUTH_COOKIE_SECURE: z.stringbool().default(true),
+  AUTH_TRUSTED_ORIGINS: z
+    .string()
+    .default("")
+    .transform((origins) =>
+      origins
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.url())),
 } satisfies ZodRawShape;
 
 export const IdentityAndAccessEnvironmentKeys = createEnvironmentKeys(

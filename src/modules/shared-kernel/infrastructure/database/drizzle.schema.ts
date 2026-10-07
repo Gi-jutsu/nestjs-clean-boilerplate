@@ -1,5 +1,6 @@
 import {
   accountSchema,
+  authenticationSessionSchema,
   sessionSchema,
   userSchema,
   verificationSchema,
@@ -10,6 +11,7 @@ import type { Pool } from "pg";
 
 export const SharedKernelDatabaseSchema = {
   account: accountSchema,
+  authenticationSessions: authenticationSessionSchema,
   outboxMessages: outboxMessageSchema,
   session: sessionSchema,
   user: userSchema,

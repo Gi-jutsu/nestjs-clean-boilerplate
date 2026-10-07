@@ -100,12 +100,11 @@ async function createTestingHealthCheckApplication() {
     });
 
   const application = testingModule.createNestApplication({
-    bodyParser: false,
     logger: false,
   });
   try {
     configureHttpApplication(application);
-    await application.init();
+    await application.listen(0, "127.0.0.1");
   } catch (error) {
     try {
       await application.close();

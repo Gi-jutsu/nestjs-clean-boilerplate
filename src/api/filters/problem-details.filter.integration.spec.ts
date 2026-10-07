@@ -137,7 +137,7 @@ describe("ProblemDetailsFilter HTTP boundary", () => {
     onTestFinished(() => application.close());
     application.useLogger(false);
     configureHttpApplication(application);
-    await application.init();
+    await application.listen(0, "127.0.0.1");
   });
 });
 

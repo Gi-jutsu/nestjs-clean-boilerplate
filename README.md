@@ -107,7 +107,7 @@ Terminus's `info`, `error`, and `details` fields, with the database named `postg
 
 [`@nestjs/drizzle`](https://docs.nestjs.com/data/drizzle) creates the database
 through `DrizzleModule.forRootAsync()`, using `ConfigService` and the shared
-schema. Better Auth and the outbox use this same database and connection pool.
+schema. Authentication and the outbox use this same database and connection pool.
 NestJS closes the pool when the application shuts down.
 
 Inject the database with the official `@InjectDrizzle()` decorator or
@@ -152,6 +152,50 @@ Explicit `HttpException` response extensions remain available. For example,
 Terminus health failures keep `info`, `error`, and `details`, while their root
 `status` becomes the numeric HTTP status 503. Query parameters and diagnostic
 `cause` or `stack` fields are excluded from the response.
+
+### 🪪 Authentication
+
+Authentication uses `@nestjs/authentication` for password hashing, session cookies,
+expiry, rotation, CSRF protection and the global authentication guard. Users and
+credentials remain in the existing PostgreSQL `user` and `account` tables;
+`authentication_session` stores only session token hashes. Generate the table
+change against your application's existing snapshots with `pnpm db:generate`,
+review and commit the new migration, and apply it before deploying. The boilerplate
+does not assign a migration number or replace your existing history.
+
+The email/password routes retain their paths:
+
+| Method | Path                      | Response                                                          |
+| ------ | ------------------------- | ----------------------------------------------------------------- |
+| POST   | `/api/auth/sign-up/email` | `{ user, token: null }` and a session cookie                      |
+| POST   | `/api/auth/sign-in/email` | `{ user, redirect: false, token: null }` and a session cookie     |
+| GET    | `/api/auth/get-session`   | `{ user, session }`, or JSON `null` when anonymous                |
+| POST   | `/api/auth/sign-out`      | `{ success: true }`, revoking the session and clearing its cookie |
+
+Sign-up accepts `name`, `email` and a password of 8–128 characters. Sign-in accepts
+`email` and `password`. Routes require authentication unless marked with the
+official `@Public()` decorator. Sessions expire after seven days, or one day of
+inactivity. The raw session token travels only in an `HttpOnly`, `SameSite=Lax`
+cookie; API responses omit it.
+
+Clients should make cookie-based HTTP requests, using `credentials: "include"`
+where needed. This is not a drop-in replacement for the Better Auth SDK: its
+additional endpoints, `rememberMe` and callback options are not implemented.
+Existing session cookies require a fresh sign-in. Existing Better Auth password
+hashes still verify, including their Unicode normalization, and successful
+sign-ins upgrade them to the native format without changing the user record.
+Deploy this change with a coordinated cutover: older Better Auth instances cannot
+verify upgraded hashes, and a rollback needs a compatible password verifier.
+Legacy session and verification tables remain intact.
+
+Set `API_BASE_URL` to the public API origin, independently of the HTTP bind
+address. The Docker example uses `http://localhost:8080` while listening on
+`0.0.0.0`. Set `AUTH_COOKIE_SECURE=true` behind HTTPS; it defaults to `true`. The supplied
+local HTTP examples set it to `false`. Add any separate frontend origins to the
+comma-separated `AUTH_TRUSTED_ORIGINS` setting; `API_BASE_URL` is already trusted.
+MFA and refresh tokens are disabled through explicit stores that reject writes.
+Enabling either feature requires replacing its disabled store with persistent
+storage and adding its own endpoints and tests.
 
 ### 📬 Outbox Pattern
 
