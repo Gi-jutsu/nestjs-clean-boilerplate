@@ -1,19 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { ExtractTablesWithRelations, isNull } from "drizzle-orm";
-import {
-  NodePgDatabase,
-  NodePgQueryResultHKT,
-} from "drizzle-orm/node-postgres";
+import { isNull } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   index,
   jsonb,
-  PgTransaction,
   pgTable,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
+// Retained for migration history and reconciliation of previously processed rows.
+// New messages are owned by @nestjs/outbox in the nest_outbox schema.
 export const outboxMessageSchema = pgTable(
   "outbox_messages",
   {
@@ -39,8 +37,6 @@ export type OutboxDatabase = NodePgDatabase<{
   outboxMessages: typeof outboxMessageSchema;
 }>;
 
-export type DatabaseTransaction = PgTransaction<
-  NodePgQueryResultHKT,
-  any, // @TODO: Fix this type
-  ExtractTablesWithRelations<any> // @TODO: Fix this type
->;
+export type DatabaseTransaction = Parameters<
+  Parameters<OutboxDatabase["transaction"]>[0]
+>[0];

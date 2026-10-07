@@ -1,5 +1,6 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { SharedKernelDatabaseSchema } from "@modules/shared-kernel/infrastructure/database/drizzle.schema.js";
+import { fromDrizzle, PostgresOutboxStore } from "@nestjs/outbox/postgres";
 import { pushSchema } from "drizzle-kit/api";
 import { getTableName } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -21,9 +22,10 @@ export async function preparePostgresSqlDatabase(connectionString: string) {
   const client = new pg.Client({ connectionString });
   try {
     await client.connect();
+    const database = drizzle(client);
     const preparation = await pushSchema(
       SharedKernelDatabaseSchema,
-      drizzle(client),
+      database,
       ["public"],
       Object.values(SharedKernelDatabaseSchema).map(getTableName),
     );
@@ -33,6 +35,10 @@ export async function preparePostgresSqlDatabase(connectionString: string) {
       );
     }
     await preparation.apply();
+    await new PostgresOutboxStore({
+      executor: fromDrizzle(database),
+      migrate: false,
+    }).migrate();
   } finally {
     await client.end();
   }

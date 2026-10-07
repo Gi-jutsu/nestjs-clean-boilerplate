@@ -52,14 +52,17 @@ Set `DATABASE_URL` in `.env` to your PostgreSQL connection string.
 docker compose up database -d
 ```
 
-2.2. Generate your application's initial migration
+2.2. Generate your application's migration history
 
 ```shell
 pnpm db:generate --name=initial
+pnpm db:generate --custom --name=nest_outbox_v1
+pnpm exec nest-outbox sql --from 0 --to 1 --statement-breakpoints
 ```
 
-Review and commit the generated SQL, snapshots, and journal in `drizzle/`, then
-apply them:
+Copy the last command's SQL output into the exact new file path printed by the
+custom-generation command. Review and commit the generated SQL, snapshots, and
+journal in `drizzle/`, then apply them:
 
 ```shell
 pnpm db:migrate
@@ -68,7 +71,9 @@ pnpm db:migrate
 The boilerplate ships schema definitions and generation commands. Each application
 owns its migration history. Preserve that history when adopting template updates;
 generate and review subsequent migrations against your application's latest
-snapshot. See [migration ownership](docs/database-migrations.md) for existing apps.
+snapshot. See [migration ownership](docs/database-migrations.md) and the
+[outbox schema workflow](docs/outbox-migration.md) for existing apps and package
+upgrades.
 
 ### 3. Start the API
 
@@ -104,9 +109,14 @@ the database type when registering plain classes with `createNestProvider()`.
 
 ### 📬 Outbox Pattern
 
-- <b>Guaranteed Event Delivery</b>: ensure events are reliably stored and dispatched achieving at-least-once delivery.
-- <b>Concurrency</b>: Leverages `REPEATABLE READ` isolation and `FOR UPDATE SKIP LOCKED` to ensure efficient and exclusive message processing, even under high load.
-- <b>Transaction Safety</b>: Events are saved in the outbox as part of the same database transaction as aggregate updates, ensuring consistency.
+- [NestJS transactional outbox](https://docs.nestjs.com/reliability/outbox) owns PostgreSQL storage, polling, retries, dead letters, leases, and consumer inboxes.
+- Pass the current Drizzle transaction to `DomainEventPublisher.publish(aggregate, transaction)`. Aggregate changes and their events commit or roll back together; the relay only sees committed rows.
+- `@OnOutboxMessage(topic, { consumer })` discovers consumers. Give each consumer a stable name and use `context.processInTransaction(transaction, work)` when its effects belong to the same database.
+- Delivery is at least once. Consumers that call external services must use those services' idempotency support. Messages from the same aggregate are delivered in insertion order.
+- Generate package schema SQL with the official `nest-outbox sql` command and put it in a custom migration allocated by your application's Drizzle history. The boilerplate ships no numbered outbox migration or automatic legacy-event import.
+- Run `pnpm db:migrate` before starting each release. Application startup uses `migrate: false` and checks the package-owned `nest_outbox` schema without changing it.
+
+For an existing installation, follow the [outbox migration instructions](docs/outbox-migration.md) before deploying this version.
 
 ### 🐳 Docker-Ready
 

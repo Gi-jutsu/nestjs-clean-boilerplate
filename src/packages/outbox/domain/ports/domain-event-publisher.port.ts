@@ -3,9 +3,9 @@ import type { BrandedInjectionToken } from "@packages/nest-provider-factory/inde
 import type { DatabaseTransaction } from "@packages/outbox/infrastructure/database/drizzle.schema.js";
 
 export interface DomainEventPublisher {
-  publish(
-    entity: AggregateRoot<any>,
-    transaction?: DatabaseTransaction,
+  publish<Properties extends Record<keyof Properties, unknown>>(
+    entity: AggregateRoot<Properties>,
+    transaction: DatabaseTransaction,
   ): Promise<void>;
 }
 
