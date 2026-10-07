@@ -4,7 +4,7 @@ import { SharedKernelDatabaseModule } from "@modules/shared-kernel/infrastructur
 import { outboxProviders } from "@modules/shared-kernel/infrastructure/outbox.providers.js";
 import { Module, type INestApplicationContext } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { NestFactory } from "@nestjs/core";
+import { Test } from "@nestjs/testing";
 import { OutboxModule } from "@nestjs/outbox";
 import {
   AggregateRoot,
@@ -48,39 +48,38 @@ describe("OutboxDomainEventPublisher with PostgreSQL", () => {
   let database: SharedKernelDatabase;
 
   it("maps a committed domain event to its original identity, topic, payload and aggregate key", async () => {
-    const system = createSystemUnderTest(application, database);
+    const systemUnderTest = createSystemUnderTest(application, database);
 
-    await system.whenTheOrderTransactionCommits();
+    await systemUnderTest.whenTheOrderTransactionCommits();
 
-    await system.thenTheOrderIsStored();
-    await system.thenTheOriginalDomainEventIsQueued();
+    await systemUnderTest.thenTheOrderIsStored();
+    await systemUnderTest.thenTheOriginalDomainEventIsQueued();
   });
 
   it("rolls back the order and its event together", async () => {
-    const system = createSystemUnderTest(application, database);
+    const systemUnderTest = createSystemUnderTest(application, database);
 
-    await system.whenTheOrderTransactionRollsBack();
+    await systemUnderTest.whenTheOrderTransactionRollsBack();
 
-    await system.thenTheTransactionWasRejected();
-    await system.thenNoOrderOrEventWasStored();
+    await systemUnderTest.thenTheTransactionWasRejected();
+    await systemUnderTest.thenNoOrderOrEventWasStored();
   });
 
   it("stores an aggregate without creating an event when no change was recorded", async () => {
-    const system = createSystemUnderTest(application, database);
+    const systemUnderTest = createSystemUnderTest(application, database);
 
-    await system.whenAnOrderWithoutNewEventsIsSaved();
+    await systemUnderTest.whenAnOrderWithoutNewEventsIsSaved();
 
-    await system.thenTheOrderIsStored();
-    await system.thenNoEventWasQueued();
+    await systemUnderTest.thenTheOrderIsStored();
+    await systemUnderTest.thenNoEventWasQueued();
   });
 
   beforeAll(async () => {
-    application = await NestFactory.createApplicationContext(
-      OutboxTestingModule,
-      {
-        logger: false,
-      },
-    );
+    application = await Test.createTestingModule({
+      imports: [OutboxTestingModule],
+    }).compile();
+    application.useLogger(false);
+    await application.init();
     database = application.get(SharedKernelDatabaseToken);
     await database.execute(
       sql`CREATE TABLE outbox_test_orders (id text PRIMARY KEY)`,

@@ -1,18 +1,18 @@
-import { bootstrapPostgresSqlContainer } from "./bootstrap-postgres-sql-database.util.js";
-
-let postgreSqlContainer: Awaited<
-  ReturnType<typeof bootstrapPostgresSqlContainer>
->;
+import {
+  bootstrapPostgresSqlContainer,
+  preparePostgresSqlDatabase,
+} from "./bootstrap-postgres-sql-database.util.js";
 
 export async function setup() {
-  try {
-    postgreSqlContainer = await bootstrapPostgresSqlContainer();
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
+  const databaseUrl = process.env.TEST_DATABASE_URL;
+  if (databaseUrl) {
+    process.env.DATABASE_URL = databaseUrl;
+    await preparePostgresSqlDatabase(databaseUrl);
+    return;
   }
-}
 
-export async function teardown() {
-  await postgreSqlContainer.stop();
+  const container = await bootstrapPostgresSqlContainer();
+  return async () => {
+    await container.stop();
+  };
 }

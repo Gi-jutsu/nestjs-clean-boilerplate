@@ -114,6 +114,26 @@ Inject the database with the official `@InjectDrizzle()` decorator or
 `getDrizzleToken()` factory token. The `SharedKernelDatabaseToken` alias preserves
 the database type when registering plain classes with `createNestProvider()`.
 
+### Testing
+
+Run `pnpm test` for unit and PostgreSQL integration coverage, and `pnpm build`
+for type checking and compilation. Integration tests start PostgreSQL through
+Testcontainers by default. To use an existing disposable test database, run:
+
+```shell
+TEST_DATABASE_URL=postgresql://localhost:5432/boilerplate_test pnpm test
+```
+
+The test runner prepares the current schema in that disposable database without
+reading or changing your application migration files. It refuses schema changes
+that may lose data. Tests protect the boilerplate's adapters, configuration,
+and application policies; package internals stay covered by their maintainers.
+Test applications use
+`@nestjs/testing` and the production HTTP configuration, and close with
+`app.close()` so Nest lifecycle hooks run. Integration scenarios use flat
+`given…`, `when…`, and `then…` methods; their factory owns fixtures, HTTP requests,
+and assertions.
+
 ### 📬 Outbox Pattern
 
 - [NestJS transactional outbox](https://docs.nestjs.com/reliability/outbox) owns PostgreSQL storage, polling, retries, dead letters, leases, and consumer inboxes.
